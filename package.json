@@ -1,0 +1,28 @@
+{
+    "name": "listas-control-ws",
+    "version": "1.0.0",
+    "description": "Web Service de Listas de Control para consultar en las centrales de Riesgos",
+    "main": "index.js",
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1",
+        "html": "copyfiles --up 1 src/public/*.html dist",
+        "build": "tsc && npm run html"
+    },
+    "author": "Hector Garcia - Mayasoft - FDLM",
+    "license": "ISC",
+    "dependencies": {
+        "axios": "^0.19.0",
+        "body-parse": "^0.1.0",
+        "express": "^4.17.1",
+        "mssql": "^5.1.0",
+        "nodemailer": "^6.2.1",
+        "simple-node-logger": "^18.12.22",
+        "winston": "^3.2.1"
+    },
+    "devDependencies": {
+        "@types/express": "^4.17.0",
+        "@types/mssql": "^4.0.14",
+        "@types/nodemailer": "^6.2.0",
+        "copyfiles": "^2.1.0"
+    }
+}
