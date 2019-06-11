@@ -4,7 +4,8 @@ import router from "./server/router/router";
 import movilizate from "./server/router/movilizate";
 import intranet from "./server/router/intranet";
 import MsSqlServer from "./database/sqlserver";
-import { PORT, logger } from "./config/config";
+import { PORT } from "./config/config";
+import { logger } from "./log/logger";
 
 //inicializando el servidor
 const server = Server.init(PORT);
@@ -24,6 +25,6 @@ MsSqlServer.instance
     });
   })
   .catch(error => {
-    logger.info(error.message);
+    logger.error(error.message);
     throw error;
   });

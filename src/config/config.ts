@@ -1,5 +1,3 @@
-var winston = require("winston");
-
 // CONFIGURACION DEL PUERTO DE LA APLICACION
 export const PORT = 3000;
 
@@ -27,6 +25,7 @@ export const EMAIL_CONFIG = {
   secure: true // true for 465, false for other ports
 };
 
+// CONFIGURACION DEL CONSUMO DEL WEB SERVICE DE COMPLIANCE
 // https://app.compliance.com.co/validador/api/ConsultaConsolidadaService/consultaConsolidada/soloRiesgo/false
 export const COMPLIANCE_WS_CONFIG = {
   baseURL: "https://app.compliance.com.co/validador/api",
@@ -40,14 +39,28 @@ export const COMPLIANCE_WS_CONFIG = {
 };
 
 //CONFIGURACION DEL LOG
-export const logger = winston.createLogger({
-  transports: [
-    new winston.transports.Console({ json: false, timestamp: true }),
-    new winston.transports.File({ filename: "M:/FDLM/Listas de Control/log/debug.log", json: false })
-  ],
-  exceptionHandlers: [
-    new winston.transports.Console({ json: false, timestamp: true }),
-    new winston.transports.File({ filename: "M:/FDLM/Listas de Control/log/exceptions.log", json: false })
-  ],
-  exitOnError: false
-});
+export const LOG_PATH = "M:/FDLM/Listas de Control/log/";
+export const LOG_FILE = "log.log";
+// import winston = require("winston");
+// import { format } from "winston";
+// const path = require("path");
+// const { combine, timestamp, label, printf } = format;
+// const myFormat = printf(({ level, message, label, timestamp }) => {
+//   return `${timestamp} [${level.toUpperCase()}] | ${label}: ${message}`;
+// });
+
+// require("winston-daily-rotate-file");
+// //{ label: path.basename(process.mainModule.filename) }
+// export const logger = winston.createLogger({
+//   level: "debug",
+//   format: combine(label({ label: "right meow!" }), timestamp({ format: "YYYY-MM-DD hh:mm:ss a" }), myFormat),
+//   transports: [
+//     new winston.transports.Console({ handleExceptions: true }),
+//     new winston.transports.File({ filename: "M:/FDLM/Listas de Control/log/debug.log" })
+//   ],
+//   // exceptionHandlers: [
+//   //   new winston.transports.Console({ handleExceptions: true, level: "debug" }),
+//   //   new winston.transports.File({ filename: "M:/FDLM/Listas de Control/log/exceptions.log", level: "debug" })
+//   // ],
+//   exitOnError: false
+// });
