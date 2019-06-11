@@ -12,11 +12,8 @@ if (!fs.existsSync(LOG_PATH)) {
 }
 
 // const filename = path.join(LOG_PATH, LOG_FILE);
-const { combine, timestamp, label, printf, colorize } = format;
-const customFormat = printf((info: any) => {
-  return `${info.timestamp} ${info.level.toUpperCase()} [${info.label}]: ${info.message}`;
-});
 
+const customFormat = format.printf((info: any) => `${info.timestamp} ${info.level} [${info.label}]: ${info.message}`);
 export const logger = createLogger({
   // change level if in dev environment versus production
   level: "debug",
@@ -26,16 +23,16 @@ export const logger = createLogger({
   ),
   transports: [
     new transports.Console({
-      format: format.combine(format.colorize(), format.printf((info: any) => `${info.timestamp} ${info.level} [${info.label}]: ${info.message}`))
+      format: format.combine(format.colorize(), customFormat)
     }),
     // new transports.File({
     //   dailyRotateFileTransport,
-    //   format: format.combine(format.printf((info: any) => `${info.timestamp} ${info.level} [${info.label}]: ${info.message}`))
+    //   format: format.combine(customFormat)
     // }),
     new transports.DailyRotateFile({
       filename: `${LOG_PATH}/%DATE%-${LOG_FILE}`,
       datePattern: "YYYY-MM-DD",
-      format: format.combine(format.printf((info: any) => `${info.timestamp} ${info.level} [${info.label}]: ${info.message}`))
+      format: format.combine(customFormat)
     })
   ]
 });
