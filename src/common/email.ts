@@ -2,6 +2,8 @@ import * as nodemailer from "nodemailer";
 import { SentMessageInfo } from "nodemailer/lib/sendmail-transport";
 import { EMAIL_CONFIG } from "../config/config";
 import { Address } from "nodemailer/lib/mailer";
+import * as log from "../log/logger";
+const logger = log.logger(__filename);
 
 export default class EMail {
   private static _instance: EMail;
@@ -12,7 +14,7 @@ export default class EMail {
   }
 
   constructor() {
-    console.log("Clase EMail Inicializada !");
+    logger.info("Clase EMail Inicializada !");
     this.transporter = nodemailer.createTransport({
       host: EMAIL_CONFIG.host,
       port: EMAIL_CONFIG.port,
@@ -42,14 +44,14 @@ export default class EMail {
       html: htmlBody // html body
     };
 
-    // console.log(this.transporter);
+    // logger.info(this.transporter);
 
     this.instance.transporter.sendMail(mailOptions, (err: Error, info: SentMessageInfo) => {
       if (err) {
-        console.log(err);
+        logger.error(err);
       } else {
-        console.log(info);
-        console.log("Message sent: %s", info.messageId);
+        logger.info(info);
+        logger.info("Message sent: %s", info.messageId);
       }
     });
   }

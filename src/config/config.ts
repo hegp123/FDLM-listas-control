@@ -41,3 +41,4 @@ export const COMPLIANCE_WS_CONFIG = {
 //CONFIGURACION DEL LOG
 export const LOG_PATH = "M:/FDLM/Listas de Control/log/";
 export const LOG_FILE = "log.log";
+export const SHOW_FULL_FILE_PATH = false;

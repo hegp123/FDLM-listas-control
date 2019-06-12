@@ -1,15 +1,17 @@
 import axios from "axios";
 import { COMPLIANCE_WS_CONFIG } from "../config/config";
+import * as log from "../log/logger";
+const logger = log.logger(__filename);
 
 const instance = axios.create(COMPLIANCE_WS_CONFIG);
 
 export let getListaControlWS = (dataToConsult: IComplianceRequest) => {
-  console.log("SERVICE: getListaControl");
+  logger.info("SERVICE: getListaControl");
   return new Promise((resolve, reject) => {
     instance
       .post(COMPLIANCE_WS_CONFIG.url, dataToConsult)
       .then(response => {
-        console.log("SERVICE: response" + response.data);
+        logger.info("SERVICE: response" + response.data);
         if (response) {
           resolve({
             ok: true,
@@ -18,7 +20,7 @@ export let getListaControlWS = (dataToConsult: IComplianceRequest) => {
         }
       })
       .catch(error => {
-        console.log("SERVICE: error" + error);
+        logger.error("SERVICE: error" + error);
         resolve({
           ok: false,
           errorMessage: error

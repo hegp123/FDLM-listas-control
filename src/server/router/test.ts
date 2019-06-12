@@ -4,6 +4,8 @@ import Compliance from "../../business-logic/compliance";
 import EMail from "../../common/email";
 import MsSqlServer from "../../database/sqlserver";
 import { RequestError } from "mssql";
+import * as log from "../../log/logger";
+const logger = log.logger(__filename);
 
 const test = Router();
 
@@ -17,7 +19,7 @@ test.get("/conectivity", (req: Request, res: Response) => {
       });
     })
     .catch((error: RequestError) => {
-      console.log(error);
+      logger.error(error);
       res.status(200).json({
         ok: false,
         message: error
@@ -26,15 +28,15 @@ test.get("/conectivity", (req: Request, res: Response) => {
 });
 
 test.get("/getListaControl", (req: Request, res: Response) => {
-  console.log("WS: getListaControl");
+  logger.info("WS: getListaControl");
   let data = req.query;
-  console.log(data);
+  logger.info(data);
 
   let compliance = Compliance.instance;
   compliance
     .getListaControl(data)
     .then((resp: any) => {
-      console.log("WS: getListaControl:then1=> " + JSON.stringify(resp.ok));
+      logger.info("WS: getListaControl:then1=> " + JSON.stringify(resp.ok));
       if (resp.ok) {
         // no hacemos nada, por ahora, todo debio salir perfecto
         //simplemente mandamos la misma respuesta, que es el resultado de la consulta
@@ -48,7 +50,7 @@ test.get("/getListaControl", (req: Request, res: Response) => {
       }
     })
     .then((resp: any) => {
-      console.log("WS: getListaControl:then2=> " + JSON.stringify(resp.ok));
+      logger.info("WS: getListaControl:then2=> " + JSON.stringify(resp.ok));
       if (resp.ok) {
         //proceso exitosamente la informacion, independientemente si es de compliance o VIGIA
         res.status(200).json({
@@ -67,13 +69,13 @@ test.get("/getListaControl", (req: Request, res: Response) => {
       }
     })
     .catch(error => {
-      console.log(error);
+      logger.error(error);
     });
 });
 
 test.get("/compliance", (req: Request, res: Response) => {
   let query = req.query;
-  console.log(query);
+  logger.info(JSON.stringify(query));
   res.status(200).json({
     ok: true,
     query
@@ -82,7 +84,7 @@ test.get("/compliance", (req: Request, res: Response) => {
 
 test.get("/compliance/:doc", (req: Request, res: Response) => {
   let param = req.params;
-  console.log(param);
+  logger.info(JSON.stringify(param));
   res.status(200).json({
     ok: true,
     param
@@ -92,7 +94,7 @@ test.get("/compliance/:doc", (req: Request, res: Response) => {
 var urlencodedParser = bodyParser.urlencoded({ extended: false });
 test.post("/compliance", urlencodedParser, (req: Request, res: Response) => {
   let body = req.body;
-  console.log(body);
+  logger.info(JSON.stringify(body));
   res.status(200).json({
     ok: true,
     body

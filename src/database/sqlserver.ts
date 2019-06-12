@@ -1,6 +1,5 @@
 import mssql, { RequestError, IResult, ISqlTypeFactory, ISqlType } from "mssql";
 import { DATA_BASE_CONFIG } from "../config/config";
-// const logger = require("../log/logger")("sqlserver");
 import * as log from "../log/logger";
 const logger = log.logger(__filename);
 

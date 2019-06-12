@@ -1,11 +1,13 @@
 import { Router, Request, Response } from "express";
+import * as log from "../../log/logger";
+const logger = log.logger(__filename);
 
 const intranet = Router();
 
 intranet.get("/i/getListaDeControl", (req: Request, res: Response) => {
-  console.log("-----------INTRANET-----------");
-  console.log(JSON.stringify(req.body));
-  console.log("----------------------");
+  logger.info("-----------INTRANET-----------");
+  logger.info(JSON.stringify(req.body));
+  logger.info("----------------------");
 
   res.status(200).json({
     ok: true,

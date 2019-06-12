@@ -2,7 +2,7 @@ const { createLogger, format, transports } = require("winston");
 require("winston-daily-rotate-file");
 import fs from "fs";
 import path from "path";
-import { LOG_PATH, LOG_FILE } from "../config/config";
+import { LOG_PATH, LOG_FILE, SHOW_FULL_FILE_PATH } from "../config/config";
 
 // const env = process.env.NODE_ENV || "development";
 
@@ -22,7 +22,7 @@ export const logger = function(fileName: string = "index") {
     exitOnError: false,
     format: format.combine(
       // format.label({ label: process.mainModule === undefined ? "" : path.basename(process.mainModule.filename) }),
-      format.label({ label: fileName }),
+      format.label({ label: SHOW_FULL_FILE_PATH ? fileName : path.basename(fileName) }),
       format.timestamp({ format: "YYYY-MM-DD HH:mm:ss" })
     ),
     transports: [
