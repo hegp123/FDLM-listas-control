@@ -1,5 +1,8 @@
 import mssql, { RequestError, IResult, ISqlTypeFactory, ISqlType } from "mssql";
 import { DATA_BASE_CONFIG } from "../config/config";
+// const logger = require("../log/logger")("sqlserver");
+import * as log from "../log/logger";
+const logger = log.logger(__dirname + __filename);
 
 export default class MsSqlServer {
   private static _instance: MsSqlServer;
@@ -15,9 +18,9 @@ export default class MsSqlServer {
    * Clase Inicializada con el patron Singleton, para solo mantener un solo pool de conexiones desde la aplicacion !
    */
   constructor() {
-    console.log("Clase de conexion a la base de datos Inicializada !");
+    logger.info("Clase de conexion a la base de datos Inicializada !");
     this.poolConnection = new mssql.ConnectionPool(DATA_BASE_CONFIG).on("error", err => {
-      console.log(err);
+      logger.error(err);
     });
   }
 
@@ -27,19 +30,19 @@ export default class MsSqlServer {
    */
   async conectarDB() {
     if (this.isConnected) {
-      console.log("La conexion a la base de datos ya existe, por favor NO intente crear otra conexion, utilice la que ya existe !");
+      logger.warn("La conexion a la base de datos ya existe, por favor NO intente crear otra conexion, utilice la que ya existe !");
     }
     await this.poolConnection.connect();
     this.isConnected = true;
-    console.log("La conexion a la base de datos fue exitosa !");
+    logger.info("La conexion a la base de datos fue exitosa !");
 
     // this.poolConnection.connect((err: mssql.ConnectionError) => {
     //   if (err) {
-    //     console.log(err.message);
+    //     logger.error(err.message);
     //     return;
     //   }
     //   this.isConnected = true;
-    //   console.log("Conectado a la Base de Datos: ");
+    //   logger.error("Conectado a la Base de Datos: ");
     // });
   }
 
@@ -79,14 +82,14 @@ export default class MsSqlServer {
       let request = this.instance.poolConnection.request();
 
       values.forEach((name: string, type: ISqlType, value: string) => {
-        console.log(`############## name: ${name},    type:${type},    value:${value} ##############`);
+        logger.info(`############## name: ${name},    type:${type},    value:${value} ##############`);
         request.input(name, type, value);
       });
 
       request.query(insertQuery, (err, result) => {
         if (err) {
-          console.log("Error al intentar el insert: " + insertQuery);
-          console.log(err);
+          logger.error("Error al intentar el insert: " + insertQuery);
+          logger.error(err);
           reject(err);
         }
 
@@ -103,7 +106,7 @@ export default class MsSqlServer {
     let ps = new mssql.PreparedStatement(this.instance.poolConnection);
 
     // values.forEach((name: string, type: ISqlType, value: string) => {
-    //   console.log(`############## name: ${name},    type:${type},    value:${value} ##############`);
+    //   logger.error(`############## name: ${name},    type:${type},    value:${value} ##############`);
     //   ps.input(name, type, value);
     // });
 
@@ -114,8 +117,8 @@ export default class MsSqlServer {
     //   ps.execute({ param: 12345 }, (err, result) => {
     //     // ... error checks
 
-    //     console.log(result.recordset[0].value); // return 12345
-    //     console.log(result.rowsAffected); // Returns number of affected rows in case of INSERT, UPDATE or DELETE statement.
+    //     logger.error(result.recordset[0].value); // return 12345
+    //     logger.error(result.rowsAffected); // Returns number of affected rows in case of INSERT, UPDATE or DELETE statement.
 
     //     ps.unprepare(err => {
     //       // ... error checks
@@ -132,8 +135,8 @@ export default class MsSqlServer {
     return new Promise((resolve, reject) => {
       this.instance.poolConnection.request().query(query, (err, results) => {
         if (err) {
-          console.log("Error en query");
-          console.log(err);
+          logger.error("Error en query");
+          logger.error(err);
           reject(err);
         }
 
@@ -160,8 +163,8 @@ export default class MsSqlServer {
         .output("output_parameter", mssql.VarChar(50))
         .execute("procedure_name", (err, result) => {
           if (err) {
-            console.log("Error en query");
-            console.log(err);
+            logger.error("Error en query");
+            logger.error(err);
             reject(err);
           }
 

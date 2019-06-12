@@ -5,7 +5,8 @@ import movilizate from "./server/router/movilizate";
 import intranet from "./server/router/intranet";
 import MsSqlServer from "./database/sqlserver";
 import { PORT } from "./config/config";
-import { logger } from "./log/logger";
+import * as log from "./log/logger";
+const logger = log.logger(__dirname + __filename);
 
 //inicializando el servidor
 const server = Server.init(PORT);

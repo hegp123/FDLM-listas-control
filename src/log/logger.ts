@@ -12,27 +12,35 @@ if (!fs.existsSync(LOG_PATH)) {
 }
 
 // const filename = path.join(LOG_PATH, LOG_FILE);
+const customFormat = format.printf((info: any) => `${info.timestamp} [${info.level}] [${info.label}]: ${info.message}`);
 
-const customFormat = format.printf((info: any) => `${info.timestamp} ${info.level} [${info.label}]: ${info.message}`);
-export const logger = createLogger({
-  // change level if in dev environment versus production
-  level: "debug",
-  format: format.combine(
-    format.label({ label: process.mainModule === undefined ? "" : path.basename(process.mainModule.filename) }),
-    format.timestamp({ format: "YYYY-MM-DD HH:mm:ss" })
-  ),
-  transports: [
-    new transports.Console({
-      format: format.combine(format.colorize(), customFormat)
-    }),
-    // new transports.File({
-    //   dailyRotateFileTransport,
-    //   format: format.combine(customFormat)
-    // }),
-    new transports.DailyRotateFile({
-      filename: `${LOG_PATH}/%DATE%-${LOG_FILE}`,
-      datePattern: "YYYY-MM-DD",
-      format: format.combine(customFormat)
-    })
-  ]
-});
+export const logger = function(fileName: string = "index") {
+  return createLogger({
+    // change level if in dev environment versus production
+    // level: env === 'production' ? 'info' : 'debug',
+    level: "debug",
+    exitOnError: false,
+    format: format.combine(
+      // format.label({ label: process.mainModule === undefined ? "" : path.basename(process.mainModule.filename) }),
+      format.label({ label: fileName }),
+      format.timestamp({ format: "YYYY-MM-DD HH:mm:ss" })
+    ),
+    transports: [
+      new transports.Console({
+        format: format.combine(format.colorize(), customFormat)
+      }),
+      // new transports.File({
+      //   dailyRotateFileTransport,
+      //   format: format.combine(customFormat)
+      // }),
+      new transports.DailyRotateFile({
+        filename: `${LOG_PATH}/%DATE%-${LOG_FILE}`,
+        datePattern: "YYYY-MM-DD",
+        format: format.combine(customFormat),
+        zippedArchive: true,
+        maxSize: "5m",
+        maxFiles: "1d"
+      })
+    ]
+  });
+};
