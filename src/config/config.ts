@@ -2,9 +2,23 @@
 export const PORT = 3000;
 
 // CONFIGURACION DE LA CONEXION A LA BASE DE DATOS
-export const DATA_BASE_CONFIG = {
+export const DATA_BASE_CONFIG_MOVILIZATE = {
+  server: "172.28.101.162",
+  port: 1433,
+  database: "movilizate",
+  user: "Movilizate",
+  password: "SqlXyz12345",
+  pool: {
+    max: 10,
+    min: 0,
+    idleTimeoutMillis: 30000
+  },
+  connectionTimeout: 30000
+};
+
+export const DATA_BASE_CONFIG_TOPAZ = {
   server: "172.28.101.2",
-  port: 1435,
+  port: 1436,
   database: "FDLM",
   user: "topaz",
   password: "FmmbTop7",
@@ -12,7 +26,22 @@ export const DATA_BASE_CONFIG = {
     max: 10,
     min: 0,
     idleTimeoutMillis: 30000
-  }
+  },
+  connectionTimeout: 30000
+};
+
+export const DATA_BASE_CONFIG_VIGIA = {
+  server: "172.28.101.244",
+  port: 1433,
+  database: "VIGIAV2",
+  user: "VIGIAWSDL",
+  password: "VigiAFdlM2014",
+  pool: {
+    max: 10,
+    min: 0,
+    idleTimeoutMillis: 30000
+  },
+  connectionTimeout: 30000
 };
 
 // CONFIGURACION DE LAS CREDENCIALES DE CORREO ELECTRONICO SALIENTE

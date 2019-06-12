@@ -1,5 +1,5 @@
 import mssql, { RequestError, IResult, ISqlTypeFactory, ISqlType } from "mssql";
-import { DATA_BASE_CONFIG } from "../config/config";
+import { DATA_BASE_CONFIG_MOVILIZATE } from "../config/config";
 import * as log from "../log/logger";
 const logger = log.logger(__filename);
 
@@ -18,7 +18,7 @@ export default class MsSqlServer {
    */
   constructor() {
     logger.info("Clase de conexion a la base de datos Inicializada !");
-    this.poolConnection = new mssql.ConnectionPool(DATA_BASE_CONFIG).on("error", err => {
+    this.poolConnection = new mssql.ConnectionPool(DATA_BASE_CONFIG_MOVILIZATE).on("error", err => {
       logger.error(err);
     });
   }
