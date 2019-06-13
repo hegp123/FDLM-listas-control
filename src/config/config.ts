@@ -45,14 +45,26 @@ export const DATA_BASE_CONFIG_VIGIA = {
 };
 
 // CONFIGURACION DE LAS CREDENCIALES DE CORREO ELECTRONICO SALIENTE
+// estos son los id de la tabla configuracion de la base de tados movilizate,
+//que es realmente donde esta configurados las credenciales para poder conectarse al servidor de base de datos
 export const EMAIL_CONFIG = {
-  host: "smtp.gmail.com",
-  port: 465, //587
-  user: "hectoregarciap@gmail.com",
-  password: "XXXXX",
-  service: "gmail",
-  secure: true // true for 465, false for other ports
+  idParamDomainMail: 11,
+  idParamDomainUser: 12,
+  idParamDomainPassword: 13,
+  idParamServerMail: 14,
+  idParamPortMail: 15,
+  idParamCorreosErrorMail: 20,
+  idParamAsuntoErrorMail: 21,
+  idParamSupportMail: 22
 };
+// export const EMAIL_CONFIG = {
+//   host: "smtp.gmail.com",
+//   port: 465, //587
+//   user: "hectoregarciap@gmail.com",
+//   password: "XXXXX",
+//   service: "gmail",
+//   secure: true // true for 465, false for other ports
+// };
 
 // CONFIGURACION DEL CONSUMO DEL WEB SERVICE DE COMPLIANCE
 // https://app.compliance.com.co/validador/api/ConsultaConsolidadaService/consultaConsolidada/soloRiesgo/false

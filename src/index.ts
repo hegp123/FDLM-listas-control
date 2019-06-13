@@ -6,6 +6,7 @@ import intranet from "./server/router/intranet";
 import MsSqlServer from "./database/sqlserver";
 import { PORT } from "./config/config";
 import * as log from "./log/logger";
+import EMail from "./common/email";
 const logger = log.logger(__filename);
 
 //inicializando el servidor
@@ -20,6 +21,8 @@ server.app.use(intranet);
 MsSqlServer.instance
   .conectarDB()
   .then(() => {
+    //establecemos los parametros para que se conecte al servidor de correos
+    EMail.instance;
     //Corriendo el servidor, solo si se pudo conectar a la base de datos
     server.start(() => {
       logger.info("Servidor corriendo en el puerto " + PORT);

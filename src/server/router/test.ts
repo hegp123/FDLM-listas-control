@@ -5,6 +5,7 @@ import EMail from "../../common/email";
 import MsSqlServer from "../../database/sqlserver";
 import { RequestError } from "mssql";
 import * as log from "../../log/logger";
+import Movilizate from "../../business-logic/movilizate";
 const logger = log.logger(__filename);
 
 const test = Router();
@@ -108,6 +109,45 @@ test.get("/sendemail", (req: Request, res: Response) => {
     ok: true,
     testService: "Email enviado !!!"
   });
+});
+
+test.get("/getConfigurationes", (req: Request, res: Response) => {
+  Movilizate.instance
+    .getEmailConfiguration()
+    .then((results: any) => {
+      res.status(200).json({
+        ok: true,
+        resultQuery: results
+      });
+    })
+    .catch((error: RequestError) => {
+      logger.error(error);
+      res.status(200).json({
+        ok: false,
+        message: error
+      });
+    });
+});
+
+test.get("/getConfiguration/:idConfiguracion", (req: Request, res: Response) => {
+  let idConfiguracion = req.params.idConfiguracion;
+  logger.info("idConfiguracion=> " + idConfiguracion);
+  let sql: string =
+    "set transaction isolation level read uncommitted select ValorTexto from Configuracion where idConfiguracion = " + idConfiguracion;
+  // MsSqlServer.ejecutarQuery(sql)
+  //   .then((results: any) => {
+  //     res.status(200).json({
+  //       ok: true,
+  //       resultQuery: results[0].ValorTexto
+  //     });
+  //   })
+  //   .catch((error: RequestError) => {
+  //     logger.error(error);
+  //     res.status(200).json({
+  //       ok: false,
+  //       message: error
+  //     });
+  //   });
 });
 
 export default test;

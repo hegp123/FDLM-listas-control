@@ -140,7 +140,7 @@ export default class MsSqlServer {
         }
 
         if (results === undefined || results.recordset.length === 0) {
-          reject("El registro solicitado no existe.");
+          reject("El query no arrojó ningún resultado.");
         } else {
           resolve(results.recordset);
         }
