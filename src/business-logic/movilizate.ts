@@ -21,7 +21,7 @@ export default class Movilizate {
     return new Promise((resolve, reject) => {
       let query: string = this.queryGetEmailConfiguration.replace("$param1", Object.values(EMAIL_CONFIG).toString());
       //   logger.info(query);
-      MsSqlServer.ejecutarQuery(query)
+      MsSqlServer.ejecutarQuery(query, MsSqlServer.instance.getDataBaseMovilizate())
         .then(results => {
           logger.info("resultado => " + results);
           resolve(results);

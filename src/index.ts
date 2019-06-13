@@ -18,8 +18,13 @@ server.app.use(movilizate);
 server.app.use(intranet);
 
 //Conexion a la base de datos, cuando arranca el server
-MsSqlServer.instance
-  .conectarDB()
+let initialize = MsSqlServer.instance;
+
+initialize
+  .conectarDBMovilizate()
+  .then(() => {
+    return initialize.conectarDBVigia();
+  })
   .then(() => {
     //establecemos los parametros para que se conecte al servidor de correos
     EMail.instance;

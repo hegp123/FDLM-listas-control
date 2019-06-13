@@ -1,16 +1,26 @@
 import mssql, { RequestError, IResult, ISqlTypeFactory, ISqlType } from "mssql";
-import { DATA_BASE_CONFIG_MOVILIZATE } from "../config/config";
+import { DATA_BASE_CONFIG_MOVILIZATE, DATA_BASE_CONFIG_VIGIA } from "../config/config";
 import * as log from "../log/logger";
 const logger = log.logger(__filename);
 
 export default class MsSqlServer {
   private static _instance: MsSqlServer;
 
-  poolConnection: mssql.ConnectionPool;
-  isConnected: boolean = false;
+  poolConnectionMovilizate: mssql.ConnectionPool;
+  poolConnectionVigia: mssql.ConnectionPool;
+  isConnectedMovilizate: boolean = false;
+  isConnectedVigia: boolean = false;
 
   public static get instance() {
     return this._instance || (this._instance = new this());
+  }
+
+  public getDataBaseMovilizate() {
+    return this.poolConnectionMovilizate;
+  }
+
+  public getDataBaseVigia() {
+    return this.poolConnectionVigia;
   }
 
   /**
@@ -18,7 +28,10 @@ export default class MsSqlServer {
    */
   constructor() {
     logger.info("Clase de conexion a la base de datos Inicializada !");
-    this.poolConnection = new mssql.ConnectionPool(DATA_BASE_CONFIG_MOVILIZATE).on("error", err => {
+    this.poolConnectionMovilizate = new mssql.ConnectionPool(DATA_BASE_CONFIG_MOVILIZATE).on("error", err => {
+      logger.error(err);
+    });
+    this.poolConnectionVigia = new mssql.ConnectionPool(DATA_BASE_CONFIG_VIGIA).on("error", err => {
       logger.error(err);
     });
   }
@@ -27,30 +40,35 @@ export default class MsSqlServer {
    * Conexion a la base de datos, solo se debe hacer al momento de iniciar el servidor (index.ts)
    * este metodo NO debe ser llamado nuevamente.
    */
-  async conectarDB() {
-    if (this.isConnected) {
-      logger.warn("La conexion a la base de datos ya existe, por favor NO intente crear otra conexion, utilice la que ya existe !");
+  async conectarDBMovilizate() {
+    if (this.isConnectedMovilizate) {
+      logger.warn("La conexion a la base de datos MOVILIZATE ya existe, por favor NO intente crear otra conexion, utilice la que ya existe !");
     }
-    await this.poolConnection.connect();
-    this.isConnected = true;
-    logger.info("La conexion a la base de datos fue exitosa !");
+    await this.poolConnectionMovilizate.connect();
+    this.isConnectedMovilizate = true;
+    logger.info("La conexion a la base de datos MOVILIZATE fue exitosa !");
+  }
 
-    // this.poolConnection.connect((err: mssql.ConnectionError) => {
-    //   if (err) {
-    //     logger.error(err.message);
-    //     return;
-    //   }
-    //   this.isConnected = true;
-    //   logger.error("Conectado a la Base de Datos: ");
-    // });
+  async conectarDBVigia() {
+    if (this.isConnectedVigia) {
+      logger.warn("La conexion a la base de datos VIGIA ya existe, por favor NO intente crear otra conexion, utilice la que ya existe !");
+    }
+    await this.poolConnectionVigia.connect();
+    this.isConnectedVigia = true;
+    logger.info("La conexion a la base de datos VIGIA fue exitosa !");
   }
 
   /**
    * Close all active connections in the pool.
    */
-  public cerrarPoolConnection() {
-    this.isConnected = false;
-    this.poolConnection.close();
+  public cerrarPoolConnectionMovilizate() {
+    this.isConnectedMovilizate = false;
+    this.poolConnectionMovilizate.close();
+  }
+
+  public cerrarPoolConnectionVigia() {
+    this.isConnectedMovilizate = false;
+    this.poolConnectionMovilizate.close();
   }
 
   /**
@@ -78,7 +96,7 @@ export default class MsSqlServer {
    */
   static insertUpdateDelete(insertQuery: string, values: any) {
     return new Promise((resolve, reject) => {
-      let request = this.instance.poolConnection.request();
+      let request = this.instance.poolConnectionMovilizate.request();
 
       values.forEach((name: string, type: ISqlType, value: string) => {
         logger.info(`############## name: ${name},    type:${type},    value:${value} ##############`);
@@ -102,7 +120,7 @@ export default class MsSqlServer {
   }
 
   static insertUpdateDeleteWithPreparedStatement(insertQuery: string, values: any) {
-    let ps = new mssql.PreparedStatement(this.instance.poolConnection);
+    let ps = new mssql.PreparedStatement(this.instance.poolConnectionMovilizate);
 
     // values.forEach((name: string, type: ISqlType, value: string) => {
     //   logger.error(`############## name: ${name},    type:${type},    value:${value} ##############`);
@@ -130,9 +148,9 @@ export default class MsSqlServer {
    * Este metodo ejecuta un query pasado como parametro
    * @param query
    */
-  static ejecutarQuery(query: string) {
+  static ejecutarQuery(query: string, dataBase: mssql.ConnectionPool) {
     return new Promise((resolve, reject) => {
-      this.instance.poolConnection.request().query(query, (err, results) => {
+      dataBase.request().query(query, (err, results) => {
         if (err) {
           logger.error("Error en query");
           logger.error(err);
@@ -156,7 +174,7 @@ export default class MsSqlServer {
    */
   static ejecutarProcedure(query: string, input: string) {
     return new Promise((resolve, reject) => {
-      this.instance.poolConnection
+      this.instance.poolConnectionMovilizate
         .request()
         .input("input_parameter", mssql.Int, input)
         .output("output_parameter", mssql.VarChar(50))

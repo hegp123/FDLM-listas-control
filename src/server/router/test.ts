@@ -11,7 +11,7 @@ const logger = log.logger(__filename);
 const test = Router();
 
 test.get("/conectivity", (req: Request, res: Response) => {
-  MsSqlServer.ejecutarQuery("select 1")
+  MsSqlServer.ejecutarQuery("select 1", MsSqlServer.instance.getDataBaseMovilizate())
     .then(results => {
       res.status(200).json({
         ok: true,
@@ -134,20 +134,20 @@ test.get("/getConfiguration/:idConfiguracion", (req: Request, res: Response) => 
   logger.info("idConfiguracion=> " + idConfiguracion);
   let sql: string =
     "set transaction isolation level read uncommitted select ValorTexto from Configuracion where idConfiguracion = " + idConfiguracion;
-  // MsSqlServer.ejecutarQuery(sql)
-  //   .then((results: any) => {
-  //     res.status(200).json({
-  //       ok: true,
-  //       resultQuery: results[0].ValorTexto
-  //     });
-  //   })
-  //   .catch((error: RequestError) => {
-  //     logger.error(error);
-  //     res.status(200).json({
-  //       ok: false,
-  //       message: error
-  //     });
-  //   });
+  MsSqlServer.ejecutarQuery(sql, MsSqlServer.instance.getDataBaseMovilizate())
+    .then((results: any) => {
+      res.status(200).json({
+        ok: true,
+        resultQuery: results[0].ValorTexto
+      });
+    })
+    .catch((error: RequestError) => {
+      logger.error(error);
+      res.status(200).json({
+        ok: false,
+        message: error
+      });
+    });
 });
 
 export default test;
