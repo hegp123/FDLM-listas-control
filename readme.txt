@@ -1,3 +1,12 @@
+## funcionalidades
+- Conexion a multiples base de datos (Movilizate y vigia)
+- Envio de correos
+- Manego de Log
+- Consumo del web service de Compliance (REST)
+- Creacion de servicios Rest
+
+
+
 ## prerequisitos
 - Tener instalado nodejs:         Servidor de la aplicacion
 - Que el servidor tenga permisos para ver la base de datos
