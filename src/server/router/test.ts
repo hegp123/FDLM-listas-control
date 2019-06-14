@@ -37,42 +37,38 @@ test.get("/getListaControl", (req: Request, res: Response) => {
   compliance
     .getListaControl(data)
     .then((resp: any) => {
-      res.status(200).json({
-        ok: true,
-        message: "El proceso terminó exitosamente.",
-        resp
-      });
-      // logger.info("WS: getListaControl:then1=> " + JSON.stringify(resp.ok));
-      // if (resp.ok) {
-      //   // no hacemos nada, por ahora, todo debio salir perfecto
-      //   //simplemente mandamos la misma respuesta, que es el resultado de la consulta
-      // } else {
-      //   //NO pudo consultar en compliance, entonces vamos a VIGIA
-      //   return {
-      //     ok: false,
-      //     errorMessage: "No se pudo consultar en compliance, ahora vamos para VIGIA, este mensaje es temporal"
-      //   };
-      // }
+      logger.info("WS: getListaControl:then1=> " + JSON.stringify(resp.ok));
+      if (resp.ok) {
+        // no hacemos nada, por ahora, todo debio salir perfecto
+        //simplemente mandamos la misma respuesta, que es el resultado de la consulta
+        return resp;
+      } else {
+        //NO pudo consultar en compliance, entonces vamos a VIGIA
+        return {
+          ok: false,
+          errorMessage: "No se pudo consultar en compliance, ahora vamos para VIGIA, este mensaje es temporal"
+        };
+      }
     })
-    // .then((resp: any) => {
-    //   logger.info("WS: getListaControl:then2=> " + JSON.stringify(resp.ok));
-    //   if (resp.ok) {
-    //     //proceso exitosamente la informacion, independientemente si es de compliance o VIGIA
-    //     res.status(200).json({
-    //       ok: true,
-    //       message: "El proceso terminó exitosamente.",
-    //       data,
-    //       response: resp.response
-    //     });
-    //   } else {
-    //     //hubo un problema en el proceso
-    //     res.status(500).json({
-    //       ok: false,
-    //       errorMessage: "500 Internal Server Error.",
-    //       data
-    //     });
-    //   }
-    // })
+    .then((resp: any) => {
+      logger.info("WS: getListaControl:then2=> " + JSON.stringify(resp.ok));
+      if (resp.ok) {
+        //proceso exitosamente la informacion, independientemente si es de compliance o VIGIA
+        res.status(200).json({
+          ok: true,
+          message: "El proceso terminó exitosamente.",
+          data,
+          response: resp.response
+        });
+      } else {
+        //hubo un problema en el proceso
+        res.status(500).json({
+          ok: false,
+          errorMessage: "500 Internal Server Error.",
+          data
+        });
+      }
+    })
     .catch(error => {
       logger.error(error);
     });

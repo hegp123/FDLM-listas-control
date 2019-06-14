@@ -18,11 +18,12 @@ export let getListaControlWS = (dataToConsult: IComplianceRequest) => {
     instance
       .post(COMPLIANCE_WS_CONFIG.url, dataToConsult)
       .then(response => {
-        logger.info("SERVICE: response" + response.data);
+        let responseData: IComplianceResponse = response.data;
+        logger.info("SERVICE: response" + JSON.stringify(responseData));
         if (response) {
           resolve({
             ok: true,
-            response: response.data
+            response: responseData
           });
         }
       })
@@ -66,7 +67,7 @@ export interface IComplianceResponse {
   presentaRiesgo: boolean;
 }
 
-interface IComplianceResponseResultados {
+export interface IComplianceResponseResultados {
   lista: string;
   descripcion: string[]; //ver explicacion abajo
   tipo: string;

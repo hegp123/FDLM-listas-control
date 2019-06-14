@@ -21,6 +21,7 @@ export default class EMail {
         logger.warn("emailConfiguration => " + JSON.stringify(emailConfiguration));
         this.transporter = nodemailer.createTransport(emailConfiguration);
         // verify connection configuration
+        logger.info("Haciendo el test de conectividad con el servidor de correo");
         this.transporter.verify(function(error: Error, success: any) {
           if (error) {
             if (error.message.indexOf("ETIMEDOUT") >= 0) {

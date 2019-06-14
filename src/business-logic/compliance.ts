@@ -1,4 +1,4 @@
-import { getListaControlWS, IComplianceRequest, IComplianceResponse } from "../services/compliance";
+import { getListaControlWS, IComplianceRequest, IComplianceResponse, IComplianceResponseResultados } from "../services/compliance";
 import * as log from "../log/logger";
 const logger = log.logger(__filename);
 
@@ -18,19 +18,18 @@ export default class Compliance {
     return new Promise(async (resolve, reject) => {
       let listaControl: any = await getListaControlWS(dataToConsult);
       if (listaControl.ok) {
-        resolve(listaControl.response);
         //aca se va a procesar, osea a hacer la logica de negocio
-        // logger.info("BI: ok");
-        // let processListaControl: any = await this.process(listaControl.response);
-        // if (processListaControl.ok) {
-        //   //aca si sito va perfecto, osea se pudo consultar y procesar la logica de negocio
-        //   logger.info("BI: processListaControl.ok");
-        //   resolve(processListaControl);
-        // } else {
-        //   //aca revienta el proceso, no tiene sentido continuar si hay algun error en la logica de negocio
-        //   logger.error("BI: processListaControl.error" + processListaControl);
-        //   reject(processListaControl);
-        // }
+        logger.info("BI: ok");
+        let processListaControl: any = await this.process(listaControl.response);
+        if (processListaControl.ok) {
+          //aca si sito va perfecto, osea se pudo consultar y procesar la logica de negocio
+          logger.info("BI: processListaControl.ok");
+          resolve(processListaControl);
+        } else {
+          //aca revienta el proceso, no tiene sentido continuar si hay algun error en la logica de negocio
+          logger.error("BI: processListaControl.error" + processListaControl);
+          reject(processListaControl);
+        }
       } else {
         //aca debe venir un ok:false y el mensaje de error que viene del consumo al servicio
         logger.error("BI: error" + listaControl);
@@ -45,10 +44,19 @@ export default class Compliance {
       //
       logger.info("nombre: " + JSON.stringify(response.nombre));
 
+      const resultados = response.resultados;
+      //lista de resultados
+      resultados.forEach((res: IComplianceResponseResultados) => {
+        //lista de descripciones por cada resultado
+        res.descripcion.forEach((desc: string) => {
+          //
+        });
+      });
+
       let anyError: boolean = false;
       if (!anyError) {
-        resolve({ ok: true, response });
         logger.info("BI: saliendo de process ok");
+        resolve({ ok: true, response });
       } else {
         logger.error("BI: saliendo de process error");
         resolve({ ok: false, errorMessage: "algun mensaje de error" });
