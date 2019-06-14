@@ -18,11 +18,11 @@ export default class Movilizate {
   }
 
   getEmailConfiguration() {
-    return new Promise((resolve, reject) => {
+    return new Promise<IEmailConfiguration[]>((resolve, reject) => {
       let query: string = this.queryGetEmailConfiguration.replace("$param1", Object.values(EMAIL_CONFIG).toString());
       //   logger.info(query);
       MsSqlServer.ejecutarQuery(query, MsSqlServer.instance.getDataBaseMovilizate())
-        .then(results => {
+        .then((results: IEmailConfiguration[]) => {
           logger.info("resultado => " + results);
           resolve(results);
         })
@@ -32,4 +32,9 @@ export default class Movilizate {
         });
     });
   }
+}
+
+export interface IEmailConfiguration {
+  idConfiguracion: number;
+  ValorTexto: string;
 }

@@ -149,7 +149,7 @@ export default class MsSqlServer {
    * @param query
    */
   static ejecutarQuery(query: string, dataBase: mssql.ConnectionPool) {
-    return new Promise((resolve, reject) => {
+    return new Promise<any>((resolve, reject) => {
       dataBase.request().query(query, (err, results) => {
         if (err) {
           logger.error("Error en query");

@@ -45,13 +45,26 @@ export default class Compliance {
       logger.info("nombre: " + JSON.stringify(response.nombre));
 
       const resultados = response.resultados;
-      //lista de resultados
-      resultados.forEach((res: IComplianceResponseResultados) => {
-        //lista de descripciones por cada resultado
-        res.descripcion.forEach((desc: string) => {
-          //
-        });
+      let tieneResultados = resultados.filter((res: IComplianceResponseResultados) => {
+        return res.tieneResultados;
       });
+      let presentaRiesgo = resultados.filter((res: IComplianceResponseResultados) => res.presentaRiesgo);
+      let presentaAdvertencia = resultados.filter((res: IComplianceResponseResultados) => {
+        return res.presentaAdvertencia;
+      });
+      logger.warn("*************************" + tieneResultados + "**********************************");
+      logger.warn("*************************" + presentaRiesgo + "**********************************");
+      logger.warn("*************************" + presentaAdvertencia + "**********************************");
+
+      //lista de resultados
+      // resultados.forEach((res: IComplianceResponseResultados) => {
+      //   //lista de descripciones por cada resultado
+      //   logger.warn("*************************" + res.lista + "**********************************");
+      //   res.descripcion.forEach((desc: string) => {
+      //     //
+      //     logger.warn(desc);
+      //   });
+      // });
 
       let anyError: boolean = false;
       if (!anyError) {

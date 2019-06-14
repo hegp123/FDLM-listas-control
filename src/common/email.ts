@@ -3,7 +3,7 @@ import { SentMessageInfo } from "nodemailer/lib/sendmail-transport";
 import { EMAIL_CONFIG } from "../config/config";
 import { Address } from "nodemailer/lib/mailer";
 import * as log from "../log/logger";
-import Movilizate from "../business-logic/movilizate";
+import Movilizate, { IEmailConfiguration } from "../business-logic/movilizate";
 const logger = log.logger(__filename);
 
 export default class EMail {
@@ -44,16 +44,16 @@ export default class EMail {
     return new Promise<any>((resolve, reject) => {
       Movilizate.instance
         .getEmailConfiguration()
-        .then((results: any) => {
+        .then((results: IEmailConfiguration[]) => {
           const emailConfiguracion = {
-            host: this.getValue(results, EMAIL_CONFIG.idParamServerMail),
-            port: this.getValue(results, EMAIL_CONFIG.idParamPortMail),
+            host: results.filter(res => res.idConfiguracion === EMAIL_CONFIG.idParamServerMail)[0].ValorTexto, //this.getValue(results, EMAIL_CONFIG.idParamServerMail),
+            port: results.filter(res => res.idConfiguracion === EMAIL_CONFIG.idParamPortMail)[0].ValorTexto, //this.getValue(results, EMAIL_CONFIG.idParamPortMail),
             auth: {
-              user: this.getValue(results, EMAIL_CONFIG.idParamDomainMail),
-              pass: this.getValue(results, EMAIL_CONFIG.idParamDomainPassword)
+              user: results.filter(res => res.idConfiguracion === EMAIL_CONFIG.idParamDomainMail)[0].ValorTexto, //this.getValue(results, EMAIL_CONFIG.idParamDomainMail),
+              pass: results.filter(res => res.idConfiguracion === EMAIL_CONFIG.idParamDomainPassword)[0].ValorTexto //this.getValue(results, EMAIL_CONFIG.idParamDomainPassword)
             },
-            from: this.getValue(results, EMAIL_CONFIG.idParamDomainMail),
-            sender: this.getValue(results, EMAIL_CONFIG.idParamDomainUser)
+            from: results.filter(res => res.idConfiguracion === EMAIL_CONFIG.idParamDomainMail)[0].ValorTexto, //this.getValue(results, EMAIL_CONFIG.idParamDomainMail),
+            sender: results.filter(res => res.idConfiguracion === EMAIL_CONFIG.idParamDomainUser)[0].ValorTexto //this.getValue(results, EMAIL_CONFIG.idParamDomainUser)
             // logger: true,
             // debug: true
           };
@@ -66,16 +66,16 @@ export default class EMail {
     });
   }
 
-  private getValue(results: any, id: number) {
-    let value = "";
-    results.forEach((confi: any) => {
-      if (confi.idConfiguracion === id) {
-        value = confi.ValorTexto;
-        return;
-      }
-    });
-    return value;
-  }
+  // private getValue(results: any, id: number) {
+  //   let value = "";
+  //   results.forEach((confi: any) => {
+  //     if (confi.idConfiguracion === id) {
+  //       value = confi.ValorTexto;
+  //       return;
+  //     }
+  //   });
+  //   return value;
+  // }
 
   static sendMail(
     to: string | Address | Array<string | Address>,
