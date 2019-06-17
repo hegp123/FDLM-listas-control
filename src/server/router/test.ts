@@ -111,7 +111,7 @@ test.get("/sendemail", (req: Request, res: Response) => {
   });
 });
 
-test.get("/getConfigurationes", (req: Request, res: Response) => {
+test.get("/getConfiguraciones", (req: Request, res: Response) => {
   Movilizate.instance
     .getEmailConfiguration()
     .then((results: any) => {
@@ -129,7 +129,7 @@ test.get("/getConfigurationes", (req: Request, res: Response) => {
     });
 });
 
-test.get("/getConfiguration/:idConfiguracion", (req: Request, res: Response) => {
+test.get("/getConfiguracion/:idConfiguracion", (req: Request, res: Response) => {
   let idConfiguracion = req.params.idConfiguracion;
   logger.info("idConfiguracion=> " + idConfiguracion);
   let sql: string =

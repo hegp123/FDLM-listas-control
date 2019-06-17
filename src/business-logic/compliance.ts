@@ -4,6 +4,7 @@ const logger = log.logger(__filename);
 
 export default class Compliance {
   private static _instance: Compliance;
+  private static PEPS_1674_SERVICE = "Peps1674Service";
 
   public static get instance() {
     return this._instance || (this._instance = new this());
@@ -22,7 +23,7 @@ export default class Compliance {
         logger.info("BI: ok");
         let processListaControl: any = await this.process(listaControl.response);
         if (processListaControl.ok) {
-          //aca si sito va perfecto, osea se pudo consultar y procesar la logica de negocio
+          //aca si todo va perfecto, osea se pudo consultar y procesar la logica de negocio
           logger.info("BI: processListaControl.ok");
           resolve(processListaControl);
         } else {
@@ -32,6 +33,7 @@ export default class Compliance {
         }
       } else {
         //aca debe venir un ok:false y el mensaje de error que viene del consumo al servicio
+        // esto quiere decir que debemos procesar por VIGIA
         logger.error("BI: error" + listaControl);
         resolve(listaControl);
       }
@@ -44,22 +46,22 @@ export default class Compliance {
       //
       logger.info("nombre: " + JSON.stringify(response.nombre));
 
-      const resultados = response.resultados;
-      let tieneResultados = resultados.filter((res: IComplianceResponseResultados) => {
-        return res.tieneResultados;
-      });
-      let presentaRiesgo = resultados.filter((res: IComplianceResponseResultados) => res.presentaRiesgo);
-      let presentaAdvertencia = resultados.filter((res: IComplianceResponseResultados) => {
-        return res.presentaAdvertencia;
-      });
-      logger.warn("*************************" + tieneResultados + "**********************************");
-      logger.warn("*************************" + presentaRiesgo + "**********************************");
-      logger.warn("*************************" + presentaAdvertencia + "**********************************");
+      //solo trabajamos con los que tienen resultado
+      let listaTieneRiesgoAdvertencia = response.resultados.filter(resultado => resultado.presentaRiesgo || resultado.presentaAdvertencia);
+
+      let presentaRiesgo = listaTieneRiesgoAdvertencia.filter(res => res.presentaRiesgo);
+      let presentaAdvertencia = listaTieneRiesgoAdvertencia.filter(res => res.presentaAdvertencia);
+      let pesp1674 = this.hasPesp1647(listaTieneRiesgoAdvertencia);
+
+      logger.warn("*************************listaTieneRiesgoAdvertencia " + listaTieneRiesgoAdvertencia.length);
+      logger.warn("*************************presentaRiesgo " + presentaRiesgo.length);
+      logger.warn("*************************presentaAdvertencia " + presentaAdvertencia.length);
+      // logger.warn("*************************pesp1674 " + pesp1674.length);
 
       //lista de resultados
       // resultados.forEach((res: IComplianceResponseResultados) => {
       //   //lista de descripciones por cada resultado
-      //   logger.warn("*************************" + res.lista + "**********************************");
+      //   logger.warn("*************************" + res.lista );
       //   res.descripcion.forEach((desc: string) => {
       //     //
       //     logger.warn(desc);
@@ -75,5 +77,16 @@ export default class Compliance {
         resolve({ ok: false, errorMessage: "algun mensaje de error" });
       }
     });
+  }
+
+  private hasPesp1647(resultados: IComplianceResponseResultados[]) {
+    let pesp1647 = resultados.filter(res => res.lista === Compliance.PEPS_1674_SERVICE);
+    if (pesp1647 && pesp1647.length > 0) {
+      pesp1647[0].descripcion.filter(desc => {
+        logger.warn(">>>>>>>>>>> " + JSON.stringify(desc));
+        // if (desc.length > 0 && desc[0] === "sinResultados") {
+        // }
+      });
+    }
   }
 }
