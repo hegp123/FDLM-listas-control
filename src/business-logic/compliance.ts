@@ -59,6 +59,8 @@ export default class Compliance {
       if (listaTieneRiesgo3.length > 0) {
         // tipo 3
         // aca toca procesar... bloquear el usuario
+        // INSERTAR EN TABLA DE BLOQUEO Y BLOQUEAMOS LOS USUARIOS QUE PERTENEZCAN A ESTE NUMERO DE SOLICITUD
+        // , OSEA LOS QUE ESTAN EN LA TABLA TEMPORAL
         resolve({ ok: true, response });
       } else {
         let listaTieneRiesgo2 = listaTieneRiesgo.filter(resultado => resultado.presentaRiesgo && resultado.lista === Compliance.PEPS_1674_SERVICE);
@@ -66,6 +68,8 @@ export default class Compliance {
 
         if (listaTieneRiesgo2.length > 0) {
           //tipo 2   tambien debemos bloquear a la persona, segun documento
+          // INSERTAR EN TABLA DE BLOQUEO Y BLOQUEAMOS LOS USUARIOS QUE PERTENEZCAN A ESTE NUMERO DE SOLICITUD
+          // , OSEA LOS QUE ESTAN EN LA TABLA TEMPORAL
           resolve({ ok: true, response });
         } else {
           let listaTieneRiesgo1 = listaTieneAdvertencia.filter(resultado => resultado.presentaAdvertencia);
@@ -77,10 +81,12 @@ export default class Compliance {
             // Por favor analizar la vinculación por parte del Director de Oficina”
             //dejando el nombre de la lista donde se genera la advertencia
             //y la descripción que es cuando el atributo “tieneResultados” = true.
+            //INSERTAR EN TABLA TEMPORAL
           } else {
             //tipo 0
             logger.warn("*************************No tiene riesgo ni adertencias");
             logger.info("BI: saliendo de process ok");
+            //INSERTAR EN TABLA TEMPORAL
             resolve({ ok: true, response });
           }
         }
