@@ -20,29 +20,42 @@ export default class Compliance {
     return new Promise(async (resolve, reject) => {
       let listaControl: any = await getListaControlWS(dataToConsult);
       if (listaControl.ok) {
-        //aca se va a procesar, osea a hacer la logica de negocio
-        logger.info("BI: ok");
-        let processListaControl: any = await this.process(listaControl.response);
-        if (processListaControl.ok) {
-          //aca si todo va perfecto, osea se pudo consultar y procesar la logica de negocio
-          logger.info("BI: processListaControl.ok");
-          resolve(processListaControl);
-        } else {
-          //aca revienta el proceso, no tiene sentido continuar si hay algun error en la logica de negocio
-          logger.error("BI: processListaControl.error" + processListaControl);
-          reject(processListaControl);
-        }
+        resolve(listaControl);
       } else {
-        //aca debe venir un ok:false y el mensaje de error que viene del consumo al servicio
-        // esto quiere decir que debemos procesar por VIGIA
-        logger.error("BI: error" + listaControl);
-        let getListaControlVigia: any = await Vigia.instance.getListaControl(dataToConsult);
-        resolve(getListaControlVigia);
+        //Hubo un error al consumir el servicio web de compliance
+        resolve(listaControl);
       }
     });
   }
 
-  private process(response: IComplianceResponse) {
+  // public getListaControl(dataToConsult: IComplianceRequest) {
+  //   logger.info("BI: getListaControl");
+  //   return new Promise(async (resolve, reject) => {
+  //     let listaControl: any = await getListaControlWS(dataToConsult);
+  //     if (listaControl.ok) {
+  //       //aca se va a procesar, osea a hacer la logica de negocio
+  //       logger.info("BI: ok");
+  //       let processListaControl: any = await this.process(listaControl.response);
+  //       if (processListaControl.ok) {
+  //         //aca si todo va perfecto, osea se pudo consultar y procesar la logica de negocio
+  //         logger.info("BI: processListaControl.ok");
+  //         resolve(processListaControl);
+  //       } else {
+  //         //aca revienta el proceso, no tiene sentido continuar si hay algun error en la logica de negocio
+  //         logger.error("BI: processListaControl.error" + processListaControl);
+  //         reject(processListaControl);
+  //       }
+  //     } else {
+  //       //aca debe venir un ok:false y el mensaje de error que viene del consumo al servicio
+  //       // esto quiere decir que debemos procesar por VIGIA
+  //       logger.error("BI: error" + listaControl);
+  //       let getListaControlVigia: any = await Vigia.instance.getListaControl(dataToConsult);
+  //       resolve(getListaControlVigia);
+  //     }
+  //   });
+  // }
+
+  public process(response: IComplianceResponse) {
     logger.info("BI: process");
     return new Promise((resolve, reject) => {
       //

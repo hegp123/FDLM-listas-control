@@ -6,6 +6,7 @@ import MsSqlServer from "../../database/sqlserver";
 import { RequestError } from "mssql";
 import * as log from "../../log/logger";
 import Movilizate from "../../business-logic/movilizate";
+import ListaControl from "../../business-logic/lista-control";
 const logger = log.logger(__filename);
 
 const test = Router();
@@ -31,10 +32,12 @@ test.get("/conectivity", (req: Request, res: Response) => {
 test.get("/getListaControl", (req: Request, res: Response) => {
   logger.info("WS: getListaControl");
   let data = req.query;
-  logger.info(data);
+  // logger.info(data);
 
-  let compliance = Compliance.instance;
-  compliance
+  // let compliance = Compliance.instance;
+  // compliance
+  let listaControl = ListaControl.instance;
+  listaControl
     .getListaControl(data)
     .then((resp: any) => {
       logger.info("WS: getListaControl:then1=> " + JSON.stringify(resp.ok));
