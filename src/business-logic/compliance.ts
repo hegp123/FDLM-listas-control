@@ -1,5 +1,6 @@
 import { getListaControlWS, IComplianceRequest, IComplianceResponse, IComplianceResponseResultados } from "../services/compliance";
 import * as log from "../log/logger";
+import Vigia from "./vigia";
 const logger = log.logger(__filename);
 
 export default class Compliance {
@@ -35,28 +36,58 @@ export default class Compliance {
         //aca debe venir un ok:false y el mensaje de error que viene del consumo al servicio
         // esto quiere decir que debemos procesar por VIGIA
         logger.error("BI: error" + listaControl);
-        resolve(listaControl);
+        let getListaControlVigia: any = await Vigia.instance.getListaControl(dataToConsult);
+        resolve(getListaControlVigia);
       }
     });
   }
 
-  public process(response: IComplianceResponse) {
+  private process(response: IComplianceResponse) {
     logger.info("BI: process");
     return new Promise((resolve, reject) => {
       //
       logger.info("nombre: " + JSON.stringify(response.nombre));
 
-      //solo trabajamos con los que tienen resultado
-      let listaTieneRiesgoAdvertencia = response.resultados.filter(resultado => resultado.presentaRiesgo || resultado.presentaAdvertencia);
+      //lista con solo presentariesgo = true
+      let listaTieneRiesgo = response.resultados.filter(resultado => resultado.presentaRiesgo);
+      //lista con solo presentaadvertencia = true y presenta riesgo false
+      let listaTieneAdvertencia = response.resultados.filter(resultado => !resultado.presentaRiesgo && resultado.presentaAdvertencia);
 
-      let presentaRiesgo = listaTieneRiesgoAdvertencia.filter(res => res.presentaRiesgo);
-      let presentaAdvertencia = listaTieneRiesgoAdvertencia.filter(res => res.presentaAdvertencia);
-      let pesp1674 = this.hasPesp1647(listaTieneRiesgoAdvertencia);
+      let listaTieneRiesgo3 = listaTieneRiesgo.filter(resultado => resultado.presentaRiesgo && resultado.lista !== Compliance.PEPS_1674_SERVICE);
+      logger.warn("*************************listaTieneRiesgo3 ??: " + listaTieneRiesgo3.length);
 
-      logger.warn("*************************listaTieneRiesgoAdvertencia " + listaTieneRiesgoAdvertencia.length);
-      logger.warn("*************************presentaRiesgo " + presentaRiesgo.length);
-      logger.warn("*************************presentaAdvertencia " + presentaAdvertencia.length);
-      // logger.warn("*************************pesp1674 " + pesp1674.length);
+      if (listaTieneRiesgo3.length > 0) {
+        // tipo 3
+        // aca toca procesar... bloquear el usuario
+        resolve({ ok: true, response });
+      } else {
+        let listaTieneRiesgo2 = listaTieneRiesgo.filter(resultado => resultado.presentaRiesgo && resultado.lista === Compliance.PEPS_1674_SERVICE);
+        logger.warn("*************************listaTieneRiesgo2 ??: " + listaTieneRiesgo2.length);
+
+        if (listaTieneRiesgo2.length > 0) {
+          //tipo 2   tambien debemos bloquear a la persona, segun documento
+          resolve({ ok: true, response });
+        } else {
+          let listaTieneRiesgo1 = listaTieneAdvertencia.filter(resultado => resultado.presentaAdvertencia);
+          logger.warn("*************************listaTieneRiesgo1 ??: " + listaTieneRiesgo1.length);
+
+          if (listaTieneRiesgo1.length > 0) {
+            resolve({ ok: true, response });
+            //tipo 1
+            // Por favor analizar la vinculación por parte del Director de Oficina”
+            //dejando el nombre de la lista donde se genera la advertencia
+            //y la descripción que es cuando el atributo “tieneResultados” = true.
+          } else {
+            //tipo 0
+            logger.warn("*************************No tiene riesgo ni adertencias");
+            logger.info("BI: saliendo de process ok");
+            resolve({ ok: true, response });
+          }
+        }
+
+        // logger.error("BI: saliendo de process error");
+        // resolve({ ok: false, errorMessage: "algun mensaje de error" });
+      }
 
       //lista de resultados
       // resultados.forEach((res: IComplianceResponseResultados) => {
@@ -67,15 +98,6 @@ export default class Compliance {
       //     logger.warn(desc);
       //   });
       // });
-
-      let anyError: boolean = false;
-      if (!anyError) {
-        logger.info("BI: saliendo de process ok");
-        resolve({ ok: true, response });
-      } else {
-        logger.error("BI: saliendo de process error");
-        resolve({ ok: false, errorMessage: "algun mensaje de error" });
-      }
     });
   }
 

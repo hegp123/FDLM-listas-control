@@ -38,8 +38,8 @@ export const logger = function(fileName: string = "index") {
         datePattern: "YYYY-MM-DD",
         format: format.combine(customFormat),
         zippedArchive: true,
-        maxSize: "5m",
-        maxFiles: "1d"
+        maxSize: "1m",
+        maxFiles: "3d"
       })
     ]
   });

@@ -1,7 +1,7 @@
 import { Router, Request, Response } from "express";
 import bodyParser = require("body-parser");
 import Compliance from "../../business-logic/compliance";
-import EMail from "../../common/email";
+import EMail from "../../email/email";
 import MsSqlServer from "../../database/sqlserver";
 import { RequestError } from "mssql";
 import * as log from "../../log/logger";

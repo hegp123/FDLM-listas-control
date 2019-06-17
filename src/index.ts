@@ -6,7 +6,7 @@ import intranet from "./server/router/intranet";
 import MsSqlServer from "./database/sqlserver";
 import { PORT } from "./config/config";
 import * as log from "./log/logger";
-import EMail from "./common/email";
+import EMail from "./email/email";
 const logger = log.logger(__filename);
 
 //inicializando el servidor
