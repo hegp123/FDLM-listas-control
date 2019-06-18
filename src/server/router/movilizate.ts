@@ -5,9 +5,9 @@ const logger = log.logger(__filename);
 const movilizate = Router();
 
 movilizate.get("/m/getListaDeControl", (req: Request, res: Response) => {
-  logger.info("-----------MOVILIZATE-----------");
-  logger.info(JSON.stringify(req.body));
-  logger.info("----------------------");
+  logger.debug("-----------MOVILIZATE-----------");
+  logger.debug(JSON.stringify(req.body));
+  logger.debug("----------------------");
 
   res.status(200).json({
     ok: true,

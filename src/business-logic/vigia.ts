@@ -10,7 +10,7 @@ export default class Vigia {
   }
 
   constructor() {
-    logger.info("Clase de comsumo a Vigia Inicializada !");
+    logger.debug("Clase de comsumo a Vigia Inicializada !");
   }
 
   public getListaControl(dataToConsult: IComplianceRequest) {
@@ -26,7 +26,7 @@ export default class Vigia {
   }
 
   private process(response: any) {
-    logger.info("BI: process");
+    logger.debug("BI: process");
     return new Promise((resolve, reject) => {
       resolve({ ok: true, message: "xxxxx" });
     });

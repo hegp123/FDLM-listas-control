@@ -5,9 +5,9 @@ const logger = log.logger(__filename);
 const intranet = Router();
 
 intranet.get("/i/getListaDeControl", (req: Request, res: Response) => {
-  logger.info("-----------INTRANET-----------");
-  logger.info(JSON.stringify(req.body));
-  logger.info("----------------------");
+  logger.debug("-----------INTRANET-----------");
+  logger.debug(JSON.stringify(req.body));
+  logger.debug("----------------------");
 
   res.status(200).json({
     ok: true,

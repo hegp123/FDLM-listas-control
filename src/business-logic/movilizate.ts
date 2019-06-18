@@ -16,17 +16,21 @@ export default class Movilizate {
   }
 
   constructor() {
-    logger.info("Clase de Logica de Negocio de Movilizate Inicializada !");
+    logger.debug("Clase de Logica de Negocio de Movilizate Inicializada !");
   }
 
   getEmailConfiguration() {
     return new Promise<IEmailConfiguration[]>((resolve, reject) => {
       let query: string = this.queryGetEmailConfiguration.replace("$param1", Object.values(EMAIL_CONFIG).toString());
-      logger.info(query);
+      // logger.debug(query);
       MsSqlServer.ejecutarQuery(query, MsSqlServer.instance.getDataBaseMovilizate())
         .then((results: IEmailConfiguration[]) => {
-          logger.info("resultado => " + results);
-          resolve(results);
+          logger.debug("resultado => " + results);
+          if (results.length === 0) {
+            resolve([]);
+          } else {
+            resolve(results);
+          }
         })
         .catch((error: Error) => {
           logger.error("resultado => " + error);

@@ -7,8 +7,8 @@ const router = Router();
 // middleware that is specific to this router
 // este se debe colocar en cada archivo de rutas si se desea rastrear las peticiones o filtrarlas y/o bloquearlas
 router.use(function timeLog(req, res, next) {
-  logger.info("Time: ", Date.now());
-  logger.info("===> " + req.body);
+  logger.debug("Time: ", Date.now());
+  logger.debug("===> " + req.body);
   next();
 });
 

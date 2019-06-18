@@ -1,6 +1,6 @@
 import * as nodemailer from "nodemailer";
 import { SentMessageInfo } from "nodemailer/lib/sendmail-transport";
-import { EMAIL_CONFIG } from "../config/config";
+import { EMAIL_CONFIG, EMAIL_TEST_CONECTIVIDAD } from "../config/config";
 import { Address } from "nodemailer/lib/mailer";
 import * as log from "../log/logger";
 import Movilizate, { IEmailConfiguration } from "../business-logic/movilizate";
@@ -15,24 +15,27 @@ export default class EMail {
   }
 
   constructor() {
-    logger.info("Clase EMail Inicializada !");
+    logger.debug("Clase EMail Inicializada !");
     this.getEmailConfiguration()
       .then((emailConfiguration: any) => {
         logger.warn("emailConfiguration => " + JSON.stringify(emailConfiguration));
         this.transporter = nodemailer.createTransport(emailConfiguration);
+
         // verify connection configuration
-        logger.info("Haciendo el test de conectividad con el servidor de correo");
-        this.transporter.verify(function(error: Error, success: any) {
-          if (error) {
-            if (error.message.indexOf("ETIMEDOUT") >= 0) {
-              logger.error("La aplicación no tiene permisos para acceder al servidor de correos.  Message: " + error.message);
+        if (EMAIL_TEST_CONECTIVIDAD) {
+          logger.info("Haciendo el test de conectividad con el servidor de correo");
+          this.transporter.verify(function(error: Error, success: any) {
+            if (error) {
+              if (error.message.indexOf("ETIMEDOUT") >= 0) {
+                logger.error("La aplicación no tiene permisos para acceder al servidor de correos.  Message: " + error.message);
+              } else {
+                logger.error(error.message);
+              }
             } else {
-              logger.error(error.message);
+              logger.info("La conexion al servidor de correos es exitosa.");
             }
-          } else {
-            logger.info("La conexion al servidor de correos es exitosa.");
-          }
-        });
+          });
+        }
       })
       .catch(error => {
         logger.error(error.message);
@@ -96,8 +99,8 @@ export default class EMail {
       if (err) {
         logger.error("#####2 " + err);
       } else {
-        logger.info(info);
-        logger.info("Message sent: %s", info.messageId);
+        logger.debug(info);
+        logger.debug("Message sent: %s", info.messageId);
       }
     });
   }

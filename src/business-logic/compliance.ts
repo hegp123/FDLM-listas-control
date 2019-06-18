@@ -14,11 +14,11 @@ export default class Compliance {
   }
 
   constructor() {
-    logger.info("Clase de comsumo a Compliance Inicializada !");
+    logger.debug("Clase de comsumo a Compliance Inicializada !");
   }
 
   public getListaControl(dataToConsult: IComplianceRequest) {
-    logger.info("BI: getListaControl");
+    logger.debug("BI: getListaControl");
     return new Promise(async (resolve, reject) => {
       let listaControl: any = await getListaControlWS(dataToConsult);
       if (listaControl.ok) {
@@ -58,10 +58,10 @@ export default class Compliance {
   // }
 
   public process(response: IComplianceResponse, tipoRiesgoEnviaCorreo: IParametroValorEnvioCorreoEmail[]) {
-    logger.info("BI: process");
+    logger.debug("BI: process");
     return new Promise((resolve, reject) => {
       //
-      logger.info("nombre: " + JSON.stringify(response.nombre));
+      logger.debug("nombre: " + JSON.stringify(response.nombre));
 
       //lista con solo presentariesgo = true
       let listaTieneRiesgo = response.resultados.filter(resultado => resultado.presentaRiesgo);
@@ -69,7 +69,7 @@ export default class Compliance {
       let listaTieneAdvertencia = response.resultados.filter(resultado => !resultado.presentaRiesgo && resultado.presentaAdvertencia);
 
       let listaTieneRiesgo3 = listaTieneRiesgo.filter(resultado => resultado.presentaRiesgo && resultado.lista !== Compliance.PEPS_1674_SERVICE);
-      logger.warn("*************************listaTieneRiesgo3 ??: " + listaTieneRiesgo3.length);
+      logger.debug("*************************listaTieneRiesgo3 ??: " + listaTieneRiesgo3.length);
 
       if (listaTieneRiesgo3.length > 0) {
         // tipo 3
@@ -83,7 +83,7 @@ export default class Compliance {
         resolve({ ok: true, response });
       } else {
         let listaTieneRiesgo2 = listaTieneRiesgo.filter(resultado => resultado.presentaRiesgo && resultado.lista === Compliance.PEPS_1674_SERVICE);
-        logger.warn("*************************listaTieneRiesgo2 ??: " + listaTieneRiesgo2.length);
+        logger.debug("*************************listaTieneRiesgo2 ??: " + listaTieneRiesgo2.length);
 
         if (listaTieneRiesgo2.length > 0) {
           //tipo 2   tambien debemos bloquear a la persona, segun documento
@@ -96,7 +96,7 @@ export default class Compliance {
           resolve({ ok: true, response });
         } else {
           let listaTieneRiesgo1 = listaTieneAdvertencia.filter(resultado => resultado.presentaAdvertencia);
-          logger.warn("*************************listaTieneRiesgo1 ??: " + listaTieneRiesgo1.length);
+          logger.debug("*************************listaTieneRiesgo1 ??: " + listaTieneRiesgo1.length);
 
           if (listaTieneRiesgo1.length > 0) {
             resolve({ ok: true, response });
@@ -112,13 +112,13 @@ export default class Compliance {
             resolve({ ok: true, response });
           } else {
             //tipo 0
-            logger.warn("*************************No tiene riesgo ni adertencias");
-            logger.info("BI: saliendo de process ok");
+            logger.debug("*************************No tiene riesgo ni adertencias");
+            logger.debug("BI: saliendo de process ok");
             //INSERTAR EN TABLA TEMPORAL
 
             //REVISAMOS SI TIENE QUE ENVIAR EMAIL
             let enviaCorreo = tipoRiesgoEnviaCorreo.filter(riesgo => riesgo.tipo === RIESGO_NO_HAY).length > 0;
-            logger.warn("*************************enviaCorreo=>  " + enviaCorreo);
+            logger.debug("*************************enviaCorreo=>  " + enviaCorreo);
 
             resolve({ ok: true, response });
           }
@@ -138,16 +138,5 @@ export default class Compliance {
       //   });
       // });
     });
-  }
-
-  private hasPesp1647(resultados: IComplianceResponseResultados[]) {
-    let pesp1647 = resultados.filter(res => res.lista === Compliance.PEPS_1674_SERVICE);
-    if (pesp1647 && pesp1647.length > 0) {
-      pesp1647[0].descripcion.filter(desc => {
-        logger.warn(">>>>>>>>>>> " + JSON.stringify(desc));
-        // if (desc.length > 0 && desc[0] === "sinResultados") {
-        // }
-      });
-    }
   }
 }

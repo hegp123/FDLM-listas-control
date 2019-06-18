@@ -6,13 +6,13 @@ const logger = log.logger(__filename);
 const instance = axios.create(COMPLIANCE_WS_CONFIG);
 
 export let getListaControlWS = (dataToConsult: IComplianceRequest) => {
-  logger.info("SERVICE: getListaControl");
+  logger.debug("SERVICE: getListaControl");
   return new Promise((resolve, reject) => {
     instance
       .post(COMPLIANCE_WS_CONFIG.url, dataToConsult)
       .then(response => {
         let responseData: IComplianceResponse = response.data;
-        // logger.info("SERVICE: response" + JSON.stringify(responseData));
+        // logger.debug("SERVICE: response" + JSON.stringify(responseData));
         if (response) {
           resolve({
             ok: true,

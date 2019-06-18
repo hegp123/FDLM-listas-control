@@ -57,6 +57,7 @@ export const EMAIL_CONFIG = {
   idParamAsuntoErrorMail: 21,
   idParamSupportMail: 22
 };
+export const EMAIL_TEST_CONECTIVIDAD = false;
 // export const EMAIL_CONFIG = {
 //   host: "smtp.gmail.com",
 //   port: 465, //587

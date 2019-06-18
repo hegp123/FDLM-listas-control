@@ -15,26 +15,26 @@ export default class ListaControl {
   }
 
   constructor() {
-    logger.info("Clase ListaControl Inicializada !");
+    logger.debug("Clase ListaControl Inicializada !");
   }
 
   public getListaControl(dataToConsult: IComplianceRequest) {
-    // logger.info("XXXX-ListaControl: getListaControl");
+    // logger.debug("XXXX-ListaControl: getListaControl");
     return new Promise(async (resolve, reject) => {
-      logger.info("XXXX-1-ListaControl: getListaControl");
+      logger.debug("XXXX-1-ListaControl: getListaControl");
       let tipoRiesgoEnviaCorreo: IParametroValorEnvioCorreoEmail[] = await this.tipoRiesgoEnviaCorreo();
-      logger.info("XXXX-2-ListaControl: getListaControl" + tipoRiesgoEnviaCorreo);
+      logger.debug("XXXX-2-ListaControl: getListaControl" + tipoRiesgoEnviaCorreo);
 
-      //   logger.info("XXXX-1-ListaControl: getListaControl");
+      //   logger.debug("XXXX-1-ListaControl: getListaControl");
       let listaControl: any = await Compliance.instance.getListaControl(dataToConsult);
-      //   logger.info("XXXX-2-ListaControl: getListaControl");
+      //   logger.debug("XXXX-2-ListaControl: getListaControl");
       if (listaControl.ok) {
-        // logger.info("XXXX-3-ListaControl: getListaControl");
+        // logger.debug("XXXX-3-ListaControl: getListaControl");
         let processListaControl: any = await Compliance.instance.process(listaControl.response, tipoRiesgoEnviaCorreo);
-        // logger.info("XXXX-4-ListaControl: getListaControl");
+        // logger.debug("XXXX-4-ListaControl: getListaControl");
         if (processListaControl.ok) {
           //aca si todo va perfecto, osea se pudo consultar y procesar la logica de negocio
-          logger.info("BI: processListaControl.ok");
+          logger.debug("BI: processListaControl.ok");
           resolve(processListaControl);
         } else {
           //aca revienta el proceso, no tiene sentido continuar si hay algun error en la logica de negocio
@@ -54,6 +54,7 @@ export default class ListaControl {
       Movilizate.instance
         .getValorParametro(ENVIO_CORREO_NIVEL)
         .then((result: IParametro) => {
+          // logger.debug("==> " + JSON.stringify(result));
           let tipoRiesgoEnviaCorreo = JSON.parse(result.Valor).filter((valor: IParametroValorEnvioCorreoEmail) => valor.notificar);
           resolve(tipoRiesgoEnviaCorreo);
         })
