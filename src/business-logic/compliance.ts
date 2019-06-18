@@ -1,6 +1,8 @@
 import { getListaControlWS, IComplianceRequest, IComplianceResponse, IComplianceResponseResultados } from "../services/compliance";
 import * as log from "../log/logger";
 import Vigia from "./vigia";
+import { IParametroValorEnvioCorreoEmail } from "./movilizate";
+import { RIESGO_ALTO, RIESGO_MEDIO, RIESGO_BAJO, RIESGO_NO_HAY } from "../constants/Constantes";
 const logger = log.logger(__filename);
 
 export default class Compliance {
@@ -55,7 +57,7 @@ export default class Compliance {
   //   });
   // }
 
-  public process(response: IComplianceResponse) {
+  public process(response: IComplianceResponse, tipoRiesgoEnviaCorreo: IParametroValorEnvioCorreoEmail[]) {
     logger.info("BI: process");
     return new Promise((resolve, reject) => {
       //
@@ -74,6 +76,10 @@ export default class Compliance {
         // aca toca procesar... bloquear el usuario
         // INSERTAR EN TABLA DE BLOQUEO Y BLOQUEAMOS LOS USUARIOS QUE PERTENEZCAN A ESTE NUMERO DE SOLICITUD
         // , OSEA LOS QUE ESTAN EN LA TABLA TEMPORAL
+
+        //REVISAMOS SI TIENE QUE ENVIAR EMAIL
+        let enviaCorreo = tipoRiesgoEnviaCorreo.filter(riesgo => riesgo.tipo === RIESGO_ALTO).length > 0;
+
         resolve({ ok: true, response });
       } else {
         let listaTieneRiesgo2 = listaTieneRiesgo.filter(resultado => resultado.presentaRiesgo && resultado.lista === Compliance.PEPS_1674_SERVICE);
@@ -83,6 +89,10 @@ export default class Compliance {
           //tipo 2   tambien debemos bloquear a la persona, segun documento
           // INSERTAR EN TABLA DE BLOQUEO Y BLOQUEAMOS LOS USUARIOS QUE PERTENEZCAN A ESTE NUMERO DE SOLICITUD
           // , OSEA LOS QUE ESTAN EN LA TABLA TEMPORAL
+
+          //REVISAMOS SI TIENE QUE ENVIAR EMAIL
+          let enviaCorreo = tipoRiesgoEnviaCorreo.filter(riesgo => riesgo.tipo === RIESGO_MEDIO).length > 0;
+
           resolve({ ok: true, response });
         } else {
           let listaTieneRiesgo1 = listaTieneAdvertencia.filter(resultado => resultado.presentaAdvertencia);
@@ -95,11 +105,21 @@ export default class Compliance {
             //dejando el nombre de la lista donde se genera la advertencia
             //y la descripción que es cuando el atributo “tieneResultados” = true.
             //INSERTAR EN TABLA TEMPORAL
+
+            //REVISAMOS SI TIENE QUE ENVIAR EMAIL
+            let enviaCorreo = tipoRiesgoEnviaCorreo.filter(riesgo => riesgo.tipo === RIESGO_BAJO).length > 0;
+
+            resolve({ ok: true, response });
           } else {
             //tipo 0
             logger.warn("*************************No tiene riesgo ni adertencias");
             logger.info("BI: saliendo de process ok");
             //INSERTAR EN TABLA TEMPORAL
+
+            //REVISAMOS SI TIENE QUE ENVIAR EMAIL
+            let enviaCorreo = tipoRiesgoEnviaCorreo.filter(riesgo => riesgo.tipo === RIESGO_NO_HAY).length > 0;
+            logger.warn("*************************enviaCorreo=>  " + enviaCorreo);
+
             resolve({ ok: true, response });
           }
         }

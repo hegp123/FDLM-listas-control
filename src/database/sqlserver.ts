@@ -1,5 +1,5 @@
 import mssql, { RequestError, IResult, ISqlTypeFactory, ISqlType } from "mssql";
-import { DATA_BASE_CONFIG_MOVILIZATE, DATA_BASE_CONFIG_VIGIA } from "../config/config";
+import { DATA_BASE_CONFIG_MOVILIZATE, DATA_BASE_CONFIG_VIGIA, DATA_BASE_CONFIG_TOPAZ } from "../config/config";
 import * as log from "../log/logger";
 const logger = log.logger(__filename);
 
@@ -8,8 +8,10 @@ export default class MsSqlServer {
 
   poolConnectionMovilizate: mssql.ConnectionPool;
   poolConnectionVigia: mssql.ConnectionPool;
+  poolConnectionTopaz: mssql.ConnectionPool;
   isConnectedMovilizate: boolean = false;
   isConnectedVigia: boolean = false;
+  isConnectedTopaz: boolean = false;
 
   public static get instance() {
     return this._instance || (this._instance = new this());
@@ -23,15 +25,22 @@ export default class MsSqlServer {
     return this.poolConnectionVigia;
   }
 
+  public getDataBaseTopaz() {
+    return this.poolConnectionTopaz;
+  }
+
   /**
    * Clase Inicializada con el patron Singleton, para solo mantener un solo pool de conexiones desde la aplicacion !
    */
   constructor() {
-    logger.info("Clase de conexion a la base de datos Inicializada !");
+    logger.debug("Clase de conexion a la base de datos Inicializada !");
     this.poolConnectionMovilizate = new mssql.ConnectionPool(DATA_BASE_CONFIG_MOVILIZATE).on("error", err => {
       logger.error(err);
     });
     this.poolConnectionVigia = new mssql.ConnectionPool(DATA_BASE_CONFIG_VIGIA).on("error", err => {
+      logger.error(err);
+    });
+    this.poolConnectionTopaz = new mssql.ConnectionPool(DATA_BASE_CONFIG_TOPAZ).on("error", err => {
       logger.error(err);
     });
   }
@@ -58,6 +67,15 @@ export default class MsSqlServer {
     logger.info("La conexion a la base de datos VIGIA fue exitosa !");
   }
 
+  async conectarDBTopaz() {
+    if (this.isConnectedTopaz) {
+      logger.warn("La conexion a la base de datos TOPAZ ya existe, por favor NO intente crear otra conexion, utilice la que ya existe !");
+    }
+    await this.poolConnectionTopaz.connect();
+    this.isConnectedTopaz = true;
+    logger.info("La conexion a la base de datos TOPAZ fue exitosa !");
+  }
+
   /**
    * Close all active connections in the pool.
    */
@@ -67,8 +85,13 @@ export default class MsSqlServer {
   }
 
   public cerrarPoolConnectionVigia() {
-    this.isConnectedMovilizate = false;
-    this.poolConnectionMovilizate.close();
+    this.isConnectedVigia = false;
+    this.poolConnectionVigia.close();
+  }
+
+  public cerrarPoolConnectionTopaz() {
+    this.isConnectedTopaz = false;
+    this.poolConnectionTopaz.close();
   }
 
   /**
@@ -76,7 +99,6 @@ export default class MsSqlServer {
    * @param insertQuery ejemplo: insert into testtable (somecolumn, somecolumn2) values (@myval, @myval2)
    * @param values este valor es un json de la forma como esta el siguiente ejemplo: [{"name": "myval", "type": "mssql.VarChar", "value": "valor a insertar" }, { "name": "myval2", "type": "mssql.mssql.Int", "value": 12345 } ]
    */
-
   static insert(insertQuery: string, values: any) {
     return this.insertUpdateDelete(insertQuery, values);
   }
@@ -99,7 +121,7 @@ export default class MsSqlServer {
       let request = this.instance.poolConnectionMovilizate.request();
 
       values.forEach((name: string, type: ISqlType, value: string) => {
-        logger.info(`############## name: ${name},    type:${type},    value:${value} ##############`);
+        logger.debug(`############## name: ${name},    type:${type},    value:${value} ##############`);
         request.input(name, type, value);
       });
 
@@ -158,7 +180,8 @@ export default class MsSqlServer {
         }
 
         if (results === undefined || results.recordset.length === 0) {
-          reject("El query no arrojó ningún resultado.");
+          logger.debug("El query no arrojó ningún resultado. " + query);
+          resolve([]);
         } else {
           resolve(results.recordset);
         }

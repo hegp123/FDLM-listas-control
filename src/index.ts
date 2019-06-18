@@ -26,6 +26,9 @@ initialize
     return initialize.conectarDBVigia();
   })
   .then(() => {
+    return initialize.conectarDBTopaz();
+  })
+  .then(() => {
     //establecemos los parametros para que se conecte al servidor de correos
     EMail.instance;
     //Corriendo el servidor, solo si se pudo conectar a la base de datos
