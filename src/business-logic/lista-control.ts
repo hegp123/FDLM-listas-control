@@ -63,4 +63,12 @@ export default class ListaControl {
         });
     });
   }
+
+  // VALUES('LISTA_TIPO_2', 'Listas tipo 2', '[{"lista": "Peps1674Service"}]')
+  /**
+   * lo voy a desarrollar sin promesas, para demostrar que es lo mismo... Hector Garcia: 2019.06.19
+   */
+  private listasTipo2() {
+    //
+  }
 }

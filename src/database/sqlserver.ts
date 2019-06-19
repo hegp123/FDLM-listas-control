@@ -170,13 +170,13 @@ export default class MsSqlServer {
    * Este metodo ejecuta un query pasado como parametro
    * @param query
    */
-  static ejecutarQuery(query: string, dataBase: mssql.ConnectionPool) {
+  static ejecutarQuery(query: string, dataBase: mssql.ConnectionPool): Promise<any> {
     return new Promise<any>((resolve, reject) => {
       dataBase.request().query(query, (err, results) => {
         if (err) {
-          logger.error("Error en query");
           logger.error(err);
           reject(err);
+          return;
         }
 
         if (results === undefined || results.recordset.length === 0) {
@@ -203,9 +203,9 @@ export default class MsSqlServer {
         .output("output_parameter", mssql.VarChar(50))
         .execute("procedure_name", (err, result) => {
           if (err) {
-            logger.error("Error en query");
             logger.error(err);
             reject(err);
+            return;
           }
 
           if (result === undefined || result.recordset.length === 0) {

@@ -17,6 +17,10 @@ export default class Compliance {
     logger.debug("Clase de comsumo a Compliance Inicializada !");
   }
 
+  /**
+   * Funcion que se encarga de llamar al consumo del web service de compliance
+   * @param dataToConsult
+   */
   public getListaControl(dataToConsult: IComplianceRequest) {
     logger.debug("BI: getListaControl");
     return new Promise(async (resolve, reject) => {
@@ -30,113 +34,126 @@ export default class Compliance {
     });
   }
 
-  // public getListaControl(dataToConsult: IComplianceRequest) {
-  //   logger.info("BI: getListaControl");
-  //   return new Promise(async (resolve, reject) => {
-  //     let listaControl: any = await getListaControlWS(dataToConsult);
-  //     if (listaControl.ok) {
-  //       //aca se va a procesar, osea a hacer la logica de negocio
-  //       logger.info("BI: ok");
-  //       let processListaControl: any = await this.process(listaControl.response);
-  //       if (processListaControl.ok) {
-  //         //aca si todo va perfecto, osea se pudo consultar y procesar la logica de negocio
-  //         logger.info("BI: processListaControl.ok");
-  //         resolve(processListaControl);
-  //       } else {
-  //         //aca revienta el proceso, no tiene sentido continuar si hay algun error en la logica de negocio
-  //         logger.error("BI: processListaControl.error" + processListaControl);
-  //         reject(processListaControl);
-  //       }
-  //     } else {
-  //       //aca debe venir un ok:false y el mensaje de error que viene del consumo al servicio
-  //       // esto quiere decir que debemos procesar por VIGIA
-  //       logger.error("BI: error" + listaControl);
-  //       let getListaControlVigia: any = await Vigia.instance.getListaControl(dataToConsult);
-  //       resolve(getListaControlVigia);
-  //     }
-  //   });
-  // }
-
+  /**
+   * Funcion que se encarga de procesar el resultado de la consulta a compliance
+   * @param response  respuesta de cpmpliance
+   * @param tipoRiesgoEnviaCorreo configuracion para saber si enviamos correo o no
+   */
   public process(response: IComplianceResponse, tipoRiesgoEnviaCorreo: IParametroValorEnvioCorreoEmail[]) {
     logger.debug("BI: process");
     return new Promise((resolve, reject) => {
       //
-      logger.debug("nombre: " + JSON.stringify(response.nombre));
+      logger.debug("-----------> NOMBRE: " + JSON.stringify(response.nombre));
 
-      //lista con solo presentariesgo = true
-      let listaTieneRiesgo = response.resultados.filter(resultado => resultado.presentaRiesgo);
-      //lista con solo presentaadvertencia = true y presenta riesgo false
-      let listaTieneAdvertencia = response.resultados.filter(resultado => !resultado.presentaRiesgo && resultado.presentaAdvertencia);
+      //obtenemos el tipo de riesgo encontrado
+      let tipoRiesgo = this.getTipoRiesgo(response.resultados);
+      logger.info("-----------> TIPO DE RIESGO " + tipoRiesgo);
+      let debeEnviarCorreo = tipoRiesgoEnviaCorreo.filter(riesgo => riesgo.tipo === tipoRiesgo && riesgo.notificar).length > 0;
+      logger.info("-----------> DEBE ENVIAR CORREO " + debeEnviarCorreo);
 
-      let listaTieneRiesgo3 = listaTieneRiesgo.filter(resultado => resultado.presentaRiesgo && resultado.lista !== Compliance.PEPS_1674_SERVICE);
-      logger.debug("*************************listaTieneRiesgo3 ??: " + listaTieneRiesgo3.length);
-
-      if (listaTieneRiesgo3.length > 0) {
-        // tipo 3
-        // aca toca procesar... bloquear el usuario
-        // INSERTAR EN TABLA DE BLOQUEO Y BLOQUEAMOS LOS USUARIOS QUE PERTENEZCAN A ESTE NUMERO DE SOLICITUD
-        // , OSEA LOS QUE ESTAN EN LA TABLA TEMPORAL
-
-        //REVISAMOS SI TIENE QUE ENVIAR EMAIL
-        let enviaCorreo = tipoRiesgoEnviaCorreo.filter(riesgo => riesgo.tipo === RIESGO_ALTO).length > 0;
-
-        resolve({ ok: true, response });
-      } else {
-        let listaTieneRiesgo2 = listaTieneRiesgo.filter(resultado => resultado.presentaRiesgo && resultado.lista === Compliance.PEPS_1674_SERVICE);
-        logger.debug("*************************listaTieneRiesgo2 ??: " + listaTieneRiesgo2.length);
-
-        if (listaTieneRiesgo2.length > 0) {
-          //tipo 2   tambien debemos bloquear a la persona, segun documento
-          // INSERTAR EN TABLA DE BLOQUEO Y BLOQUEAMOS LOS USUARIOS QUE PERTENEZCAN A ESTE NUMERO DE SOLICITUD
-          // , OSEA LOS QUE ESTAN EN LA TABLA TEMPORAL
-
-          //REVISAMOS SI TIENE QUE ENVIAR EMAIL
-          let enviaCorreo = tipoRiesgoEnviaCorreo.filter(riesgo => riesgo.tipo === RIESGO_MEDIO).length > 0;
+      switch (tipoRiesgo) {
+        case RIESGO_ALTO: // tipo 3
+          this.processRiesgoAlto(debeEnviarCorreo);
 
           resolve({ ok: true, response });
-        } else {
-          let listaTieneRiesgo1 = listaTieneAdvertencia.filter(resultado => resultado.presentaAdvertencia);
-          logger.debug("*************************listaTieneRiesgo1 ??: " + listaTieneRiesgo1.length);
+          return; // break;
 
-          if (listaTieneRiesgo1.length > 0) {
-            resolve({ ok: true, response });
-            //tipo 1
-            // Por favor analizar la vinculación por parte del Director de Oficina”
-            //dejando el nombre de la lista donde se genera la advertencia
-            //y la descripción que es cuando el atributo “tieneResultados” = true.
-            //INSERTAR EN TABLA TEMPORAL
+        case RIESGO_MEDIO: //tipo 2   tambien debemos bloquear a la persona, segun documento
+          this.processRiesgoMedio(debeEnviarCorreo);
 
-            //REVISAMOS SI TIENE QUE ENVIAR EMAIL
-            let enviaCorreo = tipoRiesgoEnviaCorreo.filter(riesgo => riesgo.tipo === RIESGO_BAJO).length > 0;
+          resolve({ ok: true, response });
+          return; // break;
 
-            resolve({ ok: true, response });
-          } else {
-            //tipo 0
-            logger.debug("*************************No tiene riesgo ni adertencias");
-            logger.debug("BI: saliendo de process ok");
-            //INSERTAR EN TABLA TEMPORAL
+        case RIESGO_BAJO: //tipo 1
+          this.processRiesgoBajo(debeEnviarCorreo);
 
-            //REVISAMOS SI TIENE QUE ENVIAR EMAIL
-            let enviaCorreo = tipoRiesgoEnviaCorreo.filter(riesgo => riesgo.tipo === RIESGO_NO_HAY).length > 0;
-            logger.debug("*************************enviaCorreo=>  " + enviaCorreo);
+          resolve({ ok: true, response });
+          return; // break;
 
-            resolve({ ok: true, response });
-          }
-        }
+        default:
+          //tipo 0
+          this.processRiesgoNoTiene(debeEnviarCorreo);
 
-        // logger.error("BI: saliendo de process error");
-        // resolve({ ok: false, errorMessage: "algun mensaje de error" });
+          resolve({ ok: true, response });
+          return; // break;
       }
-
-      //lista de resultados
-      // resultados.forEach((res: IComplianceResponseResultados) => {
-      //   //lista de descripciones por cada resultado
-      //   logger.warn("*************************" + res.lista );
-      //   res.descripcion.forEach((desc: string) => {
-      //     //
-      //     logger.warn(desc);
-      //   });
-      // });
     });
+  }
+
+  /**
+   * Metodo que revisa en los resultados de la consulta a compliance que tipo de riesgo tiene
+   * @param resultados: restulado de todas las listas consultadas en compliance
+   */
+  private getTipoRiesgo(resultados: IComplianceResponseResultados[]) {
+    //lista con solo presentariesgo = true
+    let listaTieneRiesgo = resultados.filter(resultado => resultado.presentaRiesgo);
+
+    let listaTieneRiesgo3 = listaTieneRiesgo.filter(resultado => resultado.presentaRiesgo && resultado.lista !== Compliance.PEPS_1674_SERVICE);
+    if (listaTieneRiesgo3.length > 0) {
+      return RIESGO_ALTO;
+    }
+
+    let listaTieneRiesgo2 = listaTieneRiesgo.filter(resultado => resultado.presentaRiesgo && resultado.lista === Compliance.PEPS_1674_SERVICE);
+    if (listaTieneRiesgo2.length > 0) {
+      return RIESGO_MEDIO;
+    }
+
+    //lista con solo presentaadvertencia = true y presenta riesgo false
+    let listaTieneRiesgo1 = resultados.filter(resultado => !resultado.presentaRiesgo && resultado.presentaAdvertencia);
+    if (listaTieneRiesgo1.length > 0) {
+      return RIESGO_BAJO;
+    }
+
+    return RIESGO_NO_HAY;
+  }
+
+  /**
+   * Funcion que se encarga de hacer el proceso cuando es un riesgo ALTO, osea tipo 3
+   // aca toca procesar... bloquear el usuario
+   // INSERTAR EN TABLA DE BLOQUEO Y BLOQUEAMOS LOS USUARIOS QUE PERTENEZCAN A ESTE NUMERO DE SOLICITUD
+   // , OSEA LOS QUE ESTAN EN LA TABLA TEMPORAL
+   //ENVIAMOS CORREO SI ES NECESARIO
+
+   * @param debeEnviarCorreo parametro para saber si debemo enviar email o no
+   */
+  private processRiesgoAlto(debeEnviarCorreo: boolean) {
+    logger.debug("--------> procesando riesgo ALTO");
+  }
+
+  /**
+   * Funcion que se encarga de hacer el proceso cuando es un riesgo MEDIO, osea tipo 2
+   * SOLO INSERTAR EN TABLA DE BLOQUEO, NO BLOQUEAMOS LOS USUARIOS QUE PERTENEZCAN A ESTE NUMERO DE SOLICITUD
+   * ENVIAMOS CORREO SI ES NECESARIO
+   *
+   * @param debeEnviarCorreo parametro para saber si debemo enviar email o no
+   */
+  private processRiesgoMedio(debeEnviarCorreo: boolean) {
+    logger.debug("--------> procesando riesgo MEDIO");
+    //
+  }
+
+  /**
+   * Funcion que se encarga de hacer el proceso cuando es un riesgo BAJO, osea tipo 1
+   * Por favor analizar la vinculación por parte del Director de Oficina”
+   * dejando el nombre de la lista donde se genera la advertencia
+   * y la descripción que es cuando el atributo “tieneResultados” = true.
+   * INSERTAR EN TABLA TEMPORAL
+   * ENVIAMOS CORREO SI ES NECESARIO
+   *
+   * @param debeEnviarCorreo parametro para saber si debemo enviar email o no
+   */
+  private processRiesgoBajo(debeEnviarCorreo: boolean) {
+    logger.debug("--------> procesando riesgo BAJO");
+  }
+
+  /**
+   * Funcion que se encarga de hacer el proceso cuando es un riesgo NO_TIENE, osea tipo 0
+   * INSERTAR EN TABLA TEMPORAL
+   * ENVIAMOS CORREO SI ES NECESARIO
+   *
+   * @param debeEnviarCorreo parametro para saber si debemo enviar email o no
+   */
+  private processRiesgoNoTiene(debeEnviarCorreo: boolean) {
+    logger.debug("--------> procesando riesgo NO_TIENE");
   }
 }
