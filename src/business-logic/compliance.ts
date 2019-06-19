@@ -1,6 +1,5 @@
 import { getListaControlWS, IComplianceRequest, IComplianceResponse, IComplianceResponseResultados } from "../services/compliance";
 import * as log from "../log/logger";
-import Vigia from "./vigia";
 import { IParametroValorEnvioCorreoEmail } from "./movilizate";
 import { RIESGO_ALTO, RIESGO_MEDIO, RIESGO_BAJO, RIESGO_NO_HAY } from "../constants/Constantes";
 const logger = log.logger(__filename);
@@ -36,17 +35,18 @@ export default class Compliance {
 
   /**
    * Funcion que se encarga de procesar el resultado de la consulta a compliance
+   *
    * @param response  respuesta de cpmpliance
    * @param tipoRiesgoEnviaCorreo configuracion para saber si enviamos correo o no
    */
-  public process(response: IComplianceResponse, tipoRiesgoEnviaCorreo: IParametroValorEnvioCorreoEmail[]) {
+  public process(response: IComplianceResponse, tipoRiesgoEnviaCorreo: IParametroValorEnvioCorreoEmail[], listasTipo2: string[]) {
     logger.debug("BI: process");
     return new Promise((resolve, reject) => {
       //
       logger.debug("-----------> NOMBRE: " + JSON.stringify(response.nombre));
 
       //obtenemos el tipo de riesgo encontrado
-      let tipoRiesgo = this.getTipoRiesgo(response.resultados);
+      let tipoRiesgo = this.getTipoRiesgo(response.resultados, listasTipo2);
       logger.info("-----------> TIPO DE RIESGO " + tipoRiesgo);
       let debeEnviarCorreo = tipoRiesgoEnviaCorreo.filter(riesgo => riesgo.tipo === tipoRiesgo && riesgo.notificar).length > 0;
       logger.info("-----------> DEBE ENVIAR CORREO " + debeEnviarCorreo);
@@ -84,16 +84,18 @@ export default class Compliance {
    * Metodo que revisa en los resultados de la consulta a compliance que tipo de riesgo tiene
    * @param resultados: restulado de todas las listas consultadas en compliance
    */
-  private getTipoRiesgo(resultados: IComplianceResponseResultados[]) {
+  private getTipoRiesgo(resultados: IComplianceResponseResultados[], listasTipo2: string[]) {
     //lista con solo presentariesgo = true
     let listaTieneRiesgo = resultados.filter(resultado => resultado.presentaRiesgo);
 
-    let listaTieneRiesgo3 = listaTieneRiesgo.filter(resultado => resultado.presentaRiesgo && resultado.lista !== Compliance.PEPS_1674_SERVICE);
+    // let listaTieneRiesgo3 = listaTieneRiesgo.filter(resultado => resultado.presentaRiesgo && resultado.lista !== Compliance.PEPS_1674_SERVICE);
+    let listaTieneRiesgo3 = listaTieneRiesgo.filter(resultado => resultado.presentaRiesgo && !listasTipo2.includes(resultado.lista));
     if (listaTieneRiesgo3.length > 0) {
       return RIESGO_ALTO;
     }
 
-    let listaTieneRiesgo2 = listaTieneRiesgo.filter(resultado => resultado.presentaRiesgo && resultado.lista === Compliance.PEPS_1674_SERVICE);
+    // let listaTieneRiesgo2 = listaTieneRiesgo.filter(resultado => resultado.presentaRiesgo && resultado.lista === Compliance.PEPS_1674_SERVICE);
+    let listaTieneRiesgo2 = listaTieneRiesgo.filter(resultado => resultado.presentaRiesgo && listasTipo2.includes(resultado.lista));
     if (listaTieneRiesgo2.length > 0) {
       return RIESGO_MEDIO;
     }

@@ -25,7 +25,7 @@ export default class Movilizate {
       // logger.debug(query);
       MsSqlServer.ejecutarQuery(query, MsSqlServer.instance.getDataBaseMovilizate())
         .then((results: IEmailConfiguration[]) => {
-          logger.debug("resultado => " + results);
+          // logger.debug("resultado => " + results);
           if (results.length === 0) {
             resolve([]);
           } else {
@@ -45,7 +45,7 @@ export default class Movilizate {
       //   logger.info(query);
       MsSqlServer.ejecutarQuery(query, MsSqlServer.instance.getDataBaseTopaz())
         .then((results: IParametro[]) => {
-          logger.debug("resultado => " + results);
+          // logger.debug("resultado => " + results);
           if (results.length === 0) {
             resolve({
               Descripcion: "",
@@ -76,4 +76,8 @@ export interface IParametro {
 export interface IParametroValorEnvioCorreoEmail {
   tipo: number;
   notificar: boolean;
+}
+
+export interface IParametroValorListasTipo2 {
+  lista: string;
 }
