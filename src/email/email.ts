@@ -77,10 +77,11 @@ export default class EMail {
     to: string | Address | Array<string | Address>,
     subject: string,
     htmlBody: string,
+    isTemplate: boolean = false,
     cc?: string | Address | Array<string | Address>,
     bcc?: string | Address | Array<string | Address>
   ) {
-    let mailOptions = {
+    let mailOptions: any = {
       // from: "hectoregarciap@hotmail.com",
       to,
       cc,
@@ -88,7 +89,43 @@ export default class EMail {
       subject,
       html: htmlBody
     };
+    logger.debug(":::::::::::::::>  " + mailOptions.html);
+    //si es plantilla ajustamos el mailOptions
+    if (isTemplate) {
+      let options = {
+        viewEngine: {
+          extname: ".hbs",
+          layoutsDir: path.join(__dirname, "templates"),
+          defaultLayout: "template",
+          partialsDir: path.join(__dirname, "templates/partials/")
+        },
+        viewPath: path.join(__dirname, "templates"),
+        extName: ".hbs"
+      };
+      this.instance.transporter.use("compile", hbs(options));
+      //quitamos el atributo html, y adicionamos template y context.... para que funcione con plantillas
+      delete mailOptions.html;
+      mailOptions.template = htmlBody; //cuando es template, en la variable htmlBody viene el nombre de la plantilla
+      mailOptions.context = {
+        rutaEstilos: "https://movilizate.fundaciondelamujer.com:55698/css/",
+        fecha: "10 de junio del 2019",
+        correoAdmin: "desarrollo@fundaciondelamujer.com",
+        fuenteConsulta: "Compliance y/o Vigia.... esto debe ser automatico :)",
+        aplicacion: "Movilízate",
+        usuario: "HGARCIA ",
+        oficina: "Bucaramanga"
+      };
+      // Object.keys(mailOptions).map(
+      //   function(object){
+      //     json[object]["newKey"]='newValue'
+      // });
+      // mailOptions.map(i => (i.Country = "Nepal"));
+      // var obj: any = {};
+      // obj["name"] = "value";
+      // obj["anotherName"] = "anotherValue";
+    }
 
+    logger.debug(":::::::::::::::>  " + mailOptions.html);
     this.instance.transporter.sendMail(mailOptions, (err: Error, info: SentMessageInfo) => {
       if (err) {
         logger.error("#####2 " + err);
@@ -106,36 +143,37 @@ export default class EMail {
     cc?: string | Address | Array<string | Address>,
     bcc?: string | Address | Array<string | Address>
   ) {
-    let options = {
-      viewEngine: {
-        extname: ".hbs",
-        layoutsDir: path.join(__dirname, "templates"),
-        defaultLayout: "template",
-        partialsDir: path.join(__dirname, "templates/partials/")
-      },
-      viewPath: path.join(__dirname, "templates"),
-      extName: ".hbs"
-    };
-    this.instance.transporter.use("compile", hbs(options));
-    //send mail with options
-    var mailOptions = {
-      from: "hectoregarciap@gmail.com",
-      to,
-      subject,
-      template: "email.body",
-      context: {
-        rutaEstilos: "https://movilizate.fundaciondelamujer.com:55698/css/",
-        fecha: "10 de junio del 2019",
-        correoAdmin: "desarrollo@fundaciondelamujer.com",
-        fuenteConsulta: "Compliance y/o Vigia.... esto debe ser automatico :)",
-        aplicacion: "Movilízate",
-        usuario: "HGARCIA ",
-        oficina: "Bucaramanga"
-      }
-    };
-    this.instance.transporter.sendMail(mailOptions),
-      function(error: any, response: any) {
-        console.log("mail sent to " + to);
-      };
+    this.sendMail(to, subject, templateName, true, cc, bcc);
+    // let options = {
+    //   viewEngine: {
+    //     extname: ".hbs",
+    //     layoutsDir: path.join(__dirname, "templates"),
+    //     defaultLayout: "template",
+    //     partialsDir: path.join(__dirname, "templates/partials/")
+    //   },
+    //   viewPath: path.join(__dirname, "templates"),
+    //   extName: ".hbs"
+    // };
+    // this.instance.transporter.use("compile", hbs(options));
+    // //send mail with options
+    // var mailOptions = {
+    //   from: "hectoregarciap@gmail.com",
+    //   to,
+    //   subject,
+    //   template: "email.body",
+    //   context: {
+    //     rutaEstilos: "https://movilizate.fundaciondelamujer.com:55698/css/",
+    //     fecha: "10 de junio del 2019",
+    //     correoAdmin: "desarrollo@fundaciondelamujer.com",
+    //     fuenteConsulta: "Compliance y/o Vigia.... esto debe ser automatico :)",
+    //     aplicacion: "Movilízate",
+    //     usuario: "HGARCIA ",
+    //     oficina: "Bucaramanga"
+    //   }
+    // };
+    // this.instance.transporter.sendMail(mailOptions),
+    //   function(error: any, response: any) {
+    //     console.log("mail sent to " + to);
+    //   };
   }
 }

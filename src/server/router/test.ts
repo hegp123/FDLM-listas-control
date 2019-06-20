@@ -115,7 +115,7 @@ test.get("/sendemail", (req: Request, res: Response) => {
 });
 
 test.get("/sendemailtemplate", (req: Request, res: Response) => {
-  EMail.sendMailTemplate("hectoregarciap@gmail.com", "Test - Email", "notificacion");
+  EMail.sendMailTemplate("hectoregarciap@gmail.com", "Test - Email", "email.body");
 
   res.status(200).json({
     ok: true,
