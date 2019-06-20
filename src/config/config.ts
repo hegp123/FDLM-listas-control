@@ -63,7 +63,7 @@ export const EMAIL_CONFIG_HECTOR = {
   port: 465, //587
   auth: {
     user: "hectoregarciap@gmail.com",
-    pass: "xxx"
+    pass: "xxxxx"
   },
   service: "gmail",
   secure: true, // true for 465, false for other ports

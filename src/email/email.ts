@@ -124,8 +124,13 @@ export default class EMail {
       subject,
       template: "email.body",
       context: {
-        variable1: "value1",
-        variable2: "value2"
+        rutaEstilos: "https://movilizate.fundaciondelamujer.com:55698/css/",
+        fecha: "10 de junio del 2019",
+        correoAdmin: "desarrollo@fundaciondelamujer.com",
+        fuenteConsulta: "Compliance y/o Vigia.... esto debe ser automatico :)",
+        aplicacion: "Movilízate",
+        usuario: "HGARCIA ",
+        oficina: "Bucaramanga"
       }
     };
     this.instance.transporter.sendMail(mailOptions),
