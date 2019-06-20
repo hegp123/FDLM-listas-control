@@ -114,6 +114,15 @@ test.get("/sendemail", (req: Request, res: Response) => {
   });
 });
 
+test.get("/sendemailtemplate", (req: Request, res: Response) => {
+  EMail.sendMailTemplate("hectoregarciap@gmail.com", "Test - Email", "notificacion");
+
+  res.status(200).json({
+    ok: true,
+    testService: "Email enviado !!!"
+  });
+});
+
 test.get("/getConfiguraciones", (req: Request, res: Response) => {
   Movilizate.instance
     .getEmailConfiguration()

@@ -58,14 +58,20 @@ export const EMAIL_CONFIG = {
   idParamSupportMail: 22
 };
 export const EMAIL_TEST_CONECTIVIDAD = false;
-// export const EMAIL_CONFIG = {
-//   host: "smtp.gmail.com",
-//   port: 465, //587
-//   user: "hectoregarciap@gmail.com",
-//   password: "XXXXX",
-//   service: "gmail",
-//   secure: true // true for 465, false for other ports
-// };
+export const EMAIL_CONFIG_HECTOR = {
+  host: "smtp.gmail.com",
+  port: 465, //587
+  auth: {
+    user: "hectoregarciap@gmail.com",
+    pass: "xxx"
+  },
+  service: "gmail",
+  secure: true, // true for 465, false for other ports
+  from: "hectoregarciap@hotmail.com",
+  sender: "Hectorrrrrrrrrrrrrr"
+  // logger: true,
+  // debug: true
+};
 
 // CONFIGURACION DEL CONSUMO DEL WEB SERVICE DE COMPLIANCE
 // https://app.compliance.com.co/validador/api/ConsultaConsolidadaService/consultaConsolidada/soloRiesgo/false

@@ -1,7 +1,8 @@
 import { getListaControlWS, IComplianceRequest, IComplianceResponse, IComplianceResponseResultados } from "../services/compliance";
-import * as log from "../log/logger";
 import { IParametroValorEnvioCorreoEmail } from "./movilizate";
 import { RIESGO_ALTO, RIESGO_MEDIO, RIESGO_BAJO, RIESGO_NO_HAY } from "../constants/Constantes";
+import * as log from "../log/logger";
+import EMail from "../email/email";
 const logger = log.logger(__filename);
 
 export default class Compliance {
@@ -120,6 +121,8 @@ export default class Compliance {
    */
   private processRiesgoAlto(debeEnviarCorreo: boolean) {
     logger.debug("--------> procesando riesgo ALTO");
+
+    EMail.sendMail("hectoregarciap@gmail.com", "Test - Riesgo Alto", "<h1>Hola mundo!!</h1> <h3>Email en formato html</h3>");
   }
 
   /**
@@ -157,5 +160,6 @@ export default class Compliance {
    */
   private processRiesgoNoTiene(debeEnviarCorreo: boolean) {
     logger.debug("--------> procesando riesgo NO_TIENE");
+    EMail.sendMail("hectoregarciap@gmail.com", "Test - Tranquilo no tiene riesgo", "<h1>Hola mundo!!</h1> <h3>Email en formato html</h3>");
   }
 }

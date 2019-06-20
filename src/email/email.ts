@@ -1,10 +1,12 @@
 import * as nodemailer from "nodemailer";
 import { SentMessageInfo } from "nodemailer/lib/sendmail-transport";
-import { EMAIL_CONFIG, EMAIL_TEST_CONECTIVIDAD } from "../config/config";
+import { EMAIL_CONFIG, EMAIL_TEST_CONECTIVIDAD, EMAIL_CONFIG_HECTOR } from "../config/config";
 import { Address } from "nodemailer/lib/mailer";
 import * as log from "../log/logger";
+var hbs = require("nodemailer-express-handlebars");
 import Movilizate, { IEmailConfiguration } from "../business-logic/movilizate";
 const logger = log.logger(__filename);
+import path from "path";
 
 export default class EMail {
   private static _instance: EMail;
@@ -60,7 +62,9 @@ export default class EMail {
             // logger: true,
             // debug: true
           };
-          resolve(emailConfiguracion);
+          logger.error("00000000 PILAS NO OLVIDES QUITAR ESTA LINEA Y BORRAR MI CONTRASEÑA");
+          // resolve(emailConfiguracion);
+          resolve(EMAIL_CONFIG_HECTOR);
         })
         .catch((error: Error) => {
           logger.error(error);
@@ -68,17 +72,6 @@ export default class EMail {
         });
     });
   }
-
-  // private getValue(results: any, id: number) {
-  //   let value = "";
-  //   results.forEach((confi: any) => {
-  //     if (confi.idConfiguracion === id) {
-  //       value = confi.ValorTexto;
-  //       return;
-  //     }
-  //   });
-  //   return value;
-  // }
 
   static sendMail(
     to: string | Address | Array<string | Address>,
@@ -88,11 +81,12 @@ export default class EMail {
     bcc?: string | Address | Array<string | Address>
   ) {
     let mailOptions = {
+      // from: "hectoregarciap@hotmail.com",
       to,
       cc,
       bcc,
       subject,
-      html: htmlBody // html body
+      html: htmlBody
     };
 
     this.instance.transporter.sendMail(mailOptions, (err: Error, info: SentMessageInfo) => {
@@ -103,5 +97,40 @@ export default class EMail {
         logger.debug("Message sent: %s", info.messageId);
       }
     });
+  }
+
+  static sendMailTemplate(
+    to: string | Address | Array<string | Address>,
+    subject: string,
+    templateName: string,
+    cc?: string | Address | Array<string | Address>,
+    bcc?: string | Address | Array<string | Address>
+  ) {
+    let options = {
+      viewEngine: {
+        extname: ".hbs",
+        layoutsDir: path.join(__dirname, "templates"),
+        defaultLayout: "template",
+        partialsDir: path.join(__dirname, "templates/partials/")
+      },
+      viewPath: path.join(__dirname, "templates"),
+      extName: ".hbs"
+    };
+    this.instance.transporter.use("compile", hbs(options));
+    //send mail with options
+    var mailOptions = {
+      from: "hectoregarciap@gmail.com",
+      to,
+      subject,
+      template: "email.body",
+      context: {
+        variable1: "value1",
+        variable2: "value2"
+      }
+    };
+    this.instance.transporter.sendMail(mailOptions),
+      function(error: any, response: any) {
+        console.log("mail sent to " + to);
+      };
   }
 }

@@ -7,6 +7,7 @@
 - utilizar plantillas para el body de los correos
 - funciones para hacer consultas a las bases de datos
 
+PILAS con el cors 
 
 guardar todo los registros que arroge la consulta a compliance
 Falta averiguar si tipo2 bloquea por contagio

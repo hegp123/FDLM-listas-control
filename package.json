@@ -6,7 +6,8 @@
     "scripts": {
         "test": "echo \"Error: no test specified\" && exit 1",
         "html": "copyfiles --up 1 src/public/*.html dist",
-        "build": "tsc && npm run html"
+        "hbs": "copyfiles --up 1 src/email/**/*.hbs dist",
+        "build": "tsc && npm run html && npm run hbs"
     },
     "author": "Hector Garcia - Mayasoft - FDLM",
     "license": "ISC",
@@ -14,8 +15,10 @@
         "axios": "^0.19.0",
         "body-parse": "^0.1.0",
         "express": "^4.17.1",
+        "hbs": "^4.0.4",
         "mssql": "^5.1.0",
         "nodemailer": "^6.2.1",
+        "nodemailer-express-handlebars": "^3.0.0",
         "winston": "^3.2.1",
         "winston-daily-rotate-file": "^3.9.0"
     },
@@ -24,6 +27,7 @@
         "@types/mssql": "^4.0.14",
         "@types/nodemailer": "^6.2.0",
         "@types/winston": "^2.4.4",
-        "copyfiles": "^2.1.0"
+        "copyfiles": "^2.1.0",
+        "@types/hbs": "^4.0.1"
     }
 }
