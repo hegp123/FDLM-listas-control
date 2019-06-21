@@ -3,6 +3,8 @@ import { RIESGO_ALTO, RIESGO_MEDIO, RIESGO_BAJO, RIESGO_NO_HAY } from "../consta
 import * as log from "../log/logger";
 import EMail from "../email/email";
 import { IParametroValorEnvioCorreoEmail } from "./topaz";
+import { getFechaActual } from "../util/util";
+import { BODY_PLANTILLA_NOTIFICACION } from "../config/config";
 const logger = log.logger(__filename);
 
 export default class Compliance {
@@ -40,11 +42,24 @@ export default class Compliance {
    * @param response  respuesta de cpmpliance
    * @param tipoRiesgoEnviaCorreo configuracion para saber si enviamos correo o no
    */
-  public process(response: IComplianceResponse, tipoRiesgoEnviaCorreo: IParametroValorEnvioCorreoEmail[], listasTipo2: string[]) {
+  public process({
+    response,
+    tipoRiesgoEnviaCorreo,
+    listasTipo2,
+    parametrosMail,
+    parametrosPlantilla
+  }: {
+    response: IComplianceResponse;
+    tipoRiesgoEnviaCorreo: IParametroValorEnvioCorreoEmail[];
+    listasTipo2: string[];
+    parametrosMail: IParametrosMail;
+    parametrosPlantilla: IMailOptionsContext;
+  }) {
     logger.debug("BI: process");
     return new Promise((resolve, reject) => {
       //
       logger.debug("-----------> NOMBRE: " + JSON.stringify(response.nombre));
+      parametrosPlantilla.cliente = { nombre: response.nombre, identificacion: response.datoConsultado, tipoDocumento: response.tipoDocumento };
 
       //obtenemos el tipo de riesgo encontrado
       let tipoRiesgo = this.getTipoRiesgo(response.resultados, listasTipo2);
@@ -73,7 +88,7 @@ export default class Compliance {
 
         default:
           //tipo 0
-          this.processRiesgoNoTiene(debeEnviarCorreo);
+          this.processRiesgoNoTiene(debeEnviarCorreo, parametrosMail, parametrosPlantilla);
 
           resolve({ ok: true, response });
           return; // break;
@@ -162,25 +177,45 @@ export default class Compliance {
    *
    * @param debeEnviarCorreo parametro para saber si debemo enviar email o no
    */
-  private processRiesgoNoTiene(debeEnviarCorreo: boolean) {
+  private processRiesgoNoTiene(debeEnviarCorreo: boolean, parametrosMail: IParametrosMail, parametrosPlantilla: IMailOptionsContext) {
     logger.debug("--------> procesando riesgo NO_TIENE");
+
     EMail.sendMailTemplate({
-      to: "hectoregarciap@gmail.com",
-      subject: "Test - Email",
-      mailOptionsTemplateBody: "email.body",
+      to: parametrosMail.to,
+      subject: parametrosMail.subject,
+      mailOptionsTemplateBody: BODY_PLANTILLA_NOTIFICACION,
       mailOptionsContext: {
-        rutaEstilos: "https://movilizate.fundaciondelamujer.com:55698/css/",
-        fecha: "10 de junio del 2019",
-        correoAdmin: "desarrollo@fundaciondelamujer.com",
-        fuenteConsulta: "Compliance y/o Vigia.... esto debe ser automatico :)",
+        rutaEstilos: parametrosPlantilla.rutaEstilos,
+        fecha: getFechaActual(), //"10 de junio del 2019",
+        correoAdmin: parametrosPlantilla.correoAdmin,
+        fuenteConsulta: parametrosPlantilla.fuenteConsulta,
         aplicacion: "Movilízate",
         usuario: "HGARCIA ",
         oficina: "Bucaramanga",
-        cliente: {
-          nombre: "HECTOR EDUARDO GARCIA PICON",
-          identificacion: "7573655"
-        }
+        cliente: parametrosPlantilla.cliente
       }
     });
   }
+}
+
+export interface IMailOptionsContext {
+  rutaEstilos?: string;
+  fecha?: string;
+  cliente?: ICliente;
+  correoAdmin?: string;
+  fuenteConsulta?: string;
+  aplicacion?: string;
+  usuario?: string;
+  oficina?: string;
+}
+
+export interface ICliente {
+  nombre?: string;
+  identificacion?: string;
+  tipoDocumento?: string;
+}
+
+export interface IParametrosMail {
+  to: string;
+  subject: string;
 }

@@ -8,6 +8,7 @@ import Movilizate, { IEmailConfiguration } from "../business-logic/movilizate";
 const logger = log.logger(__filename);
 import path from "path";
 import { TEMPLATE_NOTIFICACION_CORREO } from "../constants/Constantes";
+import { IMailOptionsContext } from "../business-logic/compliance";
 
 export default class EMail {
   private static _instance: EMail;
@@ -177,20 +178,4 @@ export default class EMail {
     mailOptions.template = mailOptionsTemplateBody; //nombre del body q usa la plantilla
     mailOptions.context = mailOptionsContext;
   }
-}
-
-export interface IMailOptionsContext {
-  rutaEstilos?: string;
-  fecha?: string;
-  cliente?: ICliente;
-  correoAdmin?: string;
-  fuenteConsulta?: string;
-  aplicacion?: string;
-  usuario?: string;
-  oficina?: string;
-}
-export interface ICliente {
-  nombre: string;
-  identificacion: string;
-  tipoIdentificacion?: string;
 }

@@ -6,7 +6,7 @@ export default class Topaz {
   private static _instance: Topaz;
   private queryTransactionIsolation: string = "set transaction isolation level read uncommitted ";
   private queryGetValorParametro: string =
-    this.queryTransactionIsolation + `select Descripcion, Valor from sl_lista_sarlaft_parametro where Codigo = '$param1';`;
+    this.queryTransactionIsolation + `select Descripcion, Valor from sl_lista_sarlaft_parametro where Codigo = '$param1'`;
 
   public static get instance() {
     return this._instance || (this._instance = new this());
@@ -16,9 +16,9 @@ export default class Topaz {
     logger.debug("Clase de Logica de Negocio de Topaz Inicializada !");
   }
 
-  getValorParametro(parametro: string) {
+  getValorParametro(codigo: string) {
     return new Promise<IParametro>((resolve, reject) => {
-      let query: string = this.queryGetValorParametro.replace("$param1", parametro);
+      let query: string = this.queryGetValorParametro.replace("$param1", codigo);
       //   logger.info(query);
       MsSqlServer.ejecutarQuery(query, MsSqlServer.instance.getDataBaseTopaz())
         .then((results: IParametro[]) => {

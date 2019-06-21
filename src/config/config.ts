@@ -1,5 +1,9 @@
 // CONFIGURACION DEL PUERTO DE LA APLICACION
 export const PORT = 3000;
+export const FORMATO_FECHA = "dddd, D [de] MMMM [del] YYYY";
+export const FUENTE_CONSULTA_COMPLIANCE = "COMPLIANCE";
+export const FUENTE_CONSULTA_VIGIA = "VIGIA";
+export const BODY_PLANTILLA_NOTIFICACION = "email.body";
 
 // CONFIGURACION DE LA CONEXION A LA BASE DE DATOS
 export const DATA_BASE_CONFIG_MOVILIZATE = {
@@ -67,7 +71,7 @@ export const EMAIL_CONFIG_HECTOR = {
   port: 465, //587
   auth: {
     user: "hectoregarciap@gmail.com",
-    pass: "xxxxx"
+    pass: "XXXXX"
   },
   service: "gmail",
   secure: true, // true for 465, false for other ports
