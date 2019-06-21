@@ -19,100 +19,20 @@
             <tr>
                 <td>
                     <div style="padding-left: 15px; padding-right: 10px; padding-top: 5px; padding-bottom: 5px; border: 1px solid rgb(135,33,117); width: 100%;">
-                        <table cellspacing="0" style="width: 100%;">
-                            <tr>
-                                <td colspan="2" style="font-size: 13px; font-family: Arial;">
-                                    <p>
-                                        <img style="vertical-align: bottom;" src="{{{rutaEstilos}}}img/bullet_tit.png" />
-                                        <span style="color: rgb(135,33,117); font-weight: bold; font-size: 18px; font-family: Arial; margin-top: 10px;">Notificaciones Movilízate</span>
-                                    </p>
-                                    <p style="font-style: italic;">{{{fecha}}}</p>
-                                    <p>&nbsp;</p>
-                                    <p>Buen día</p>
-
-                                    <p>Apreciado usuario <br /><br /></p>
-                                    <p>
-                                        Se realiz&oacute; la consulta de la persona <strong>{{{cliente.nombre}}}</strong> con n&uacute;mero de identificaci&oacute;n
-                                        <strong>{{{cliente.identificacion}}}</strong>, el cual fue positivo al verificarlo en la(s) lista(s)
-                                    </p>
-                                    <!-- ************************** -->
-                                    <table style="margin-left: auto; margin-right: auto;" border="1" width="100%">
-                                        <tbody>
-                                            <tr>
-                                                <td style="width: 5% !important; text-align: center;"><strong>#</strong></td>
-                                                <td style="width: 5% !important; text-align: center;"><strong>Riesgo</strong></td>
-                                                <td style="width: 20% !important; text-align: center;"><strong>Lista</strong></td>
-                                                <td style="width: 70% !important; text-align: center;"><strong>Descripción</strong></td>
-                                            </tr>
-                                            <tr>
-                                                <td style="width: 12%; text-align: center;">&nbsp;1</td>
-                                                <td style="width: 13.9941%; text-align: center;">&nbsp;3</td>
-                                                <td style="width: 41.0059%;">&nbsp;LibretaMilitarService</td>
-                                                <td style="width: 22%;">&nbsp;idDatoConsultado: 40799693|mensajeError: |lugar: Distrito Militar No. 015|direccion: Batall&oacute;n de Artilleria No. 2 La Popa (Valledupar - Cesar)|id: 6438913|nombre: HECTOR EDUARDO GARCIA PICON|mensajeWarning: |clase: Reservista - 2da Clase\n</td>
-                                            </tr>
-                                            <tr>
-                                                <td style="width: 12%; text-align: center;">2</td>
-                                                <td style="width: 13.9941%; text-align: center;">3</td>
-                                                <td style="width: 41.0059%;">CopniaService</td>
-                                                <td style="width: 22%;">apellidos: GARCIA PICON|resolucionnacional: 828|numerodematriculaprofesional: 54255-150002|tipodedocumento: C&eacute;dula de ciudadan&iacute;a|fechadematricula: 20/12/2007 12:00:00 a. m.|sancionado: No|numerodedocumento: 7573655|profesion: INGENIERO DE SISTEMAS|nombres: HECTOR EDUARDO\n</td>
-                                            </tr>
-                                            <tr>
-                                                <td style="width: 12%; text-align: center;">3</td>
-                                                <td style="width: 13.9941%; text-align: center;">2</td>
-                                                <td style="width: 41.0059%;">RuesService</td>
-                                                <td style="width: 22%;">La consulta por n&uacute;mero de identificaci&oacute;n no ha retornado resultados</td>
-                                            </tr>
-                                            <tr>
-                                                <td style="width: 12%; text-align: center;">4</td>
-                                                <td style="width: 13.9941%; text-align: center;">1</td>
-                                                <td style="width: 41.0059%;">SimitService</td>
-                                                <td style="width: 22%;">Estado de Cuenta sobre las Multas y Sanciones por Infracciones de Tr&aacute;nsito.\nEl (la) se&ntilde;or(a) identificado(a) con Cedula No. 7573655 (SIETE CINCO SIETE TRES SEIS CINCO CINCO ), no posee a la fecha pendientes de pago registrados en Simit por concepto de Multas y Sanciones por Infracciones de Tr&aacute;nsito, en los Organismos de Tr&aacute;nsito conectados al sistema.\nNota: Este documento es v&aacute;lido durante la fecha de expedici&oacute;n\n</td>
-                                            </tr>
-                                            <tr>
-                                                <td style="width: 12%; text-align: center;">5</td>
-                                                <td style="width: 13.9941%; text-align: center;">0</td>
-                                                <td style="width: 41.0059%;">InterpolService</td>
-                                                <td style="width: 22%;">respuestaSin: El documento ingresado no se encuentra registrado en la lista de Interpol</td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
-                                    <p>&nbsp;</p>
-                                    <!-- ************************** -->
-                                    <p><strong>(3) - CADENA NACIONALES</strong>.</p>
-                                    <p><strong>(3) - PROCESOS JUDICIALES PENALES</strong>.</p>
-                                    <p><strong>(2) - PERSONA PUBLICAMENTE EXPUESTA PEP</strong>.</p>
-                                    <p><strong>(1) - PROCESOS CIVILES Y FAMILIARES</strong>.</p>
-                                    <p><strong>Descripcion:</strong> xxxxxx. descipcion de la lista de compliance</p>
-                                    <p>&nbsp;</p>
-                                    <p>La consulta se efectuó por parte de la aplicación <strong>{{{aplicacion}}}</strong>, Usuario: <b>{{{usuario}}}</b> Oficina: <b>{{{oficina}}}</b></p>
-                                    <p><strong>Fuente de consulta: </strong>{{{fuenteConsulta}}}</p>
-                                    <p>Esta es una notificación preventiva.</p>
-                                    <p>Para información adicional, comuníquese con: {{{correoAdmin}}}</p>
-                                    <p><br /></p>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td style="font-size: 13px; font-family: Arial;">
-                                    <p><br />Coordialmente,<br /><br /><br />
-                                        <b>Departamento de Desarrollo Tecnológico</b>
-                                        <br /><br />
-                                    </p>
-                                </td>
-                                <td style="text-align: right; font-size: 13px; font-family: Arial;">
-                                    <a href="www.fundaciondelamujer.com">
-                                        <img src="{{{rutaEstilos}}}img/icon_mail.png" border="0" />
-                                    </a>
-                                </td>
-                            </tr>
+                        <table cellspacing="0" style="width: 100%; font-size: 13px; font-family: Arial;">
+                            {{>header}}
+                            {{{body}}}
+                            {{>footer}}
                         </table>
                     </div>
                 </td>
             </tr>
-            <td>
-                <div style="padding-left: 15px; padding-right: 12px; background-color: rgb(135,33,117); color: #e5e5e5; vertical-align: middle; text-align: center; font-size: 12px; font-family: Arial; padding-top: 5px; padding-bottom: 5px; width: 100%;">
-                    Todos los derechos reservados Copyright © 2013-2014 &nbsp;&nbsp;&nbsp;&nbsp;| <a style="text-decoration: none; color: #e5e5e5; margin-left: 10px;" href="www.fundaciondelamujer.com">www.fundaciondelamujer.com</a>
-                </div>
-            </td>
+            <tr>
+                <td>
+                    <div style="padding-left: 15px; padding-right: 12px; background-color: rgb(135,33,117); color: #e5e5e5; vertical-align: middle; text-align: center; font-size: 12px; font-family: Arial; padding-top: 5px; padding-bottom: 5px; width: 100%;">
+                        Todos los derechos reservados Copyright © 2013-2014 &nbsp;&nbsp;&nbsp;&nbsp;| <a style="text-decoration: none; color: #e5e5e5; margin-left: 10px;" href="www.fundaciondelamujer.com">www.fundaciondelamujer.com</a>
+                    </div>
+                </td>
             </tr>
         </tbody>
     </table>

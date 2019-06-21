@@ -1,3 +1,66 @@
-<h4>Main Body Here</h4>
+{{!-- <h4>Main Body Here</h4>
 {{variable1}} <br />
-{{variable2}}
+{{variable2}} --}}
+<tr>
+    {{!-- toca dejarlo colspan 2 porque en el footer tiene un tr con dos td --}}
+    <td colspan="2">
+        <p>
+            Se realizó la consulta de la persona <strong>{{{cliente.nombre}}}</strong> con número de identificación
+            <strong>{{{cliente.identificacion}}}</strong>, el cual fue positivo al verificarlo en la(s) lista(s)
+        </p>
+        <table style="margin-left: auto; margin-right: auto;" border="1" width="100%">
+            <thead>
+                <tr>
+                    <td style="width: 5%; text-align: center;"><strong>#</strong></td>
+                    <td style="width: 5%; text-align: center;"><strong>Riesgo</strong></td>
+                    <td style="width: 20%; text-align: center;"><strong>Lista</strong></td>
+                    <td style="width: 70%; text-align: center;"><strong>Descripción</strong></td>
+                </tr>
+            </thead>
+            <tbody>
+
+                <tr>
+                    <td>1</td>
+                    <td>3</td>
+                    <td>LibretaMilitarService</td>
+                    <td>idDatoConsultado: 40799693|mensajeError: |lugar: Distrito Militar No. 015|direccion: Batallón de Artilleria No. 2 La Popa (Valledupar - Cesar)|id: 6438913|nombre: HECTOR EDUARDO GARCIA PICON|mensajeWarning: |clase: Reservista - 2da Clase\n</td>
+                </tr>
+                <tr>
+                    <td>2</td>
+                    <td>3</td>
+                    <td>CopniaService</td>
+                    <td>apellidos: GARCIA PICON|resolucionnacional: 828|numerodematriculaprofesional: 54255-150002|tipodedocumento: C&eacute;dula de ciudadan&iacute;a|fechadematricula: 20/12/2007 12:00:00 a. m.|sancionado: No|numerodedocumento: 7573655|profesion: INGENIERO DE SISTEMAS|nombres: HECTOR EDUARDO\n</td>
+                </tr>
+                <tr>
+                    <td>3</td>
+                    <td>2</td>
+                    <td>RuesService</td>
+                    <td>La consulta por número de identificación no ha retornado resultados</td>
+                </tr>
+                <tr>
+                    <td>4</td>
+                    <td>1</td>
+                    <td>SimitService</td>
+                    <td>Estado de Cuenta sobre las Multas y Sanciones por Infracciones de Tránsito.\nEl (la) se&ntilde;or(a) identificado(a) con Cedula No. 7573655 (SIETE CINCO SIETE TRES SEIS CINCO CINCO ), no posee a la fecha pendientes de pago registrados en Simit por concepto de Multas y Sanciones por Infracciones de Tránsito, en los Organismos de Tránsito conectados al sistema.\nNota: Este documento es válido durante la fecha de expedición\n</td>
+                </tr>
+                <tr>
+                    <td>5</td>
+                    <td>0</td>
+                    <td>InterpolService</td>
+                    <td>respuestaSin: El documento ingresado no se encuentra registrado en la lista de Interpol</td>
+                </tr>
+            </tbody>
+        </table>
+        <p></p>
+        <!-- ************************** -->
+        {{!-- <p><strong>(3) - CADENA NACIONALES</strong>.</p>
+        <p><strong>(3) - PROCESOS JUDICIALES PENALES</strong>.</p>
+        <p><strong>(2) - PERSONA PUBLICAMENTE EXPUESTA PEP</strong>.</p>
+        <p><strong>(1) - PROCESOS CIVILES Y FAMILIARES</strong>.</p>
+        <p><strong>Descripcion:</strong> xxxxxx. descipcion de la lista de compliance</p>
+        <p></p> --}}
+        <p>La consulta se efectuó por parte de la aplicación <strong>{{{aplicacion}}}</strong>, Usuario: <b>{{{usuario}}}</b> Oficina: <b>{{{oficina}}}</b></p>
+        <p><strong>Fuente de consulta: </strong>{{{fuenteConsulta}}}</p>
+    </td>
+</tr>
+<!-- ************************** -->
