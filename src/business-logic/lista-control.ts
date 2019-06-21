@@ -2,8 +2,8 @@ import * as log from "../log/logger";
 import Vigia from "./vigia";
 import { IComplianceRequest } from "../services/compliance";
 import Compliance from "./compliance";
-import Movilizate, { IParametro, IParametroValorEnvioCorreoEmail, IParametroValorListasTipo2 } from "./movilizate";
 import { ENVIO_CORREO_NIVEL, LISTA_TIPO_2 } from "../constants/Constantes";
+import Topaz, { IParametro, IParametroValorEnvioCorreoEmail, IParametroValorListasTipo2 } from "./topaz";
 const logger = log.logger(__filename);
 
 export default class ListaControl {
@@ -23,6 +23,13 @@ export default class ListaControl {
       //   logger.debug("XXXX-1-ListaControl: getListaControl");
       let listaControl: any = await Compliance.instance.getListaControl(dataToConsult);
       //   logger.debug("XXXX-2-ListaControl: getListaControl");
+
+      //CONSULTAMOS ESTOS DATOS FUERA DEL IF, PORQUE AAPLICA PARA COMPLIANCE Y VIGIA
+      // let to: string = await this.getTo();
+      // let subject: string =  await this.getSubject()"";
+      // let rutaEstilos: string =  await this.getRutaEstilos()"";
+      // let correoAdmin: string =   await this.getCorreoAdmin()"";
+
       if (listaControl.ok) {
         // logger.debug("XXXX-3-ListaControl: getListaControl");
         //tipoRiesgoEnviaCorreo y listasTipo2 ES SOLO PARA COMPLIANCE, AL MENOS POR AHORA
@@ -50,12 +57,31 @@ export default class ListaControl {
     });
   }
 
+  // let to: string = await this.getTo();
+  private getTo() {
+    return new Promise<string>((resolve, reject) => {
+      Topaz.instance
+        .getValorParametro(ENVIO_CORREO_NIVEL)
+        .then((parametro: IParametro) => {
+          // logger.debug("==> " + JSON.stringify(result));
+          let tipoRiesgoEnviaCorreo = JSON.parse(parametro.Valor).filter((valor: IParametroValorEnvioCorreoEmail) => valor.notificar);
+          resolve(tipoRiesgoEnviaCorreo);
+        })
+        .catch(error => {
+          reject(error);
+        });
+    });
+  }
+  // let subject: string =  await this.getSubject()"";
+  // let rutaEstilos: string =  await this.getRutaEstilos()"";
+  // let correoAdmin: string =   await this.getCorreoAdmin()"";
+
   /**
    * Funcion que se encarga de buscar los tipos de riesgos que deben enviar correos
    */
   private tipoRiesgoEnviaCorreo() {
     return new Promise<IParametroValorEnvioCorreoEmail[]>((resolve, reject) => {
-      Movilizate.instance
+      Topaz.instance
         .getValorParametro(ENVIO_CORREO_NIVEL)
         .then((parametro: IParametro) => {
           // logger.debug("==> " + JSON.stringify(result));
@@ -74,7 +100,7 @@ export default class ListaControl {
    */
   private listasTipo2() {
     return new Promise<string[]>((resolve, reject) => {
-      Movilizate.instance
+      Topaz.instance
         .getValorParametro(LISTA_TIPO_2)
         .then((parametro: IParametro) => {
           // logger.debug("==> " + JSON.stringify(result));

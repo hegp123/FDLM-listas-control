@@ -9,12 +9,14 @@
 
 PILAS con el cors 
 
-guardar todo los registros que arroge la consulta a compliance
-Falta averiguar si tipo2 bloquea por contagio
-nuevo parametro: al que se le debe enviar el correo.. cumplimiento@fundaciondelamujer.com
-crear mockup del correo
-falta en el correo adicionar la fuente de consulta  vigia o compliance
-enviar correo cuando compliance no responda: asusto y contenido debe ser parametrizable
+- falta crear un registro nuevo en movilizate.configuracion para guardar el correo admin;
+            correoAdmin: "desarrollo@fundaciondelamujer.com",//
+- guardar todo los registros que arroge la consulta a compliance
+- Falta averiguar si tipo2 bloquea por contagio
+- nuevo parametro: al que se le debe enviar el correo.. cumplimiento@fundaciondelamujer.com
+- crear mockup del correo
+- falta en el correo adicionar la fuente de consulta  vigia o compliance
+- enviar correo cuando compliance no responda: asusto y contenido debe ser parametrizable
 
 
 ## prerequisitos

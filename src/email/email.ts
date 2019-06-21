@@ -103,8 +103,8 @@ export default class EMail {
    *
    * @param to
    * @param subject
-   * @param htmlBody: html plano o nombre del archivo de la plantilla
-   * @param isTemplate: si es true, en el campo htmlBody debe venir el nombre del archivo de la plantilla, por ejemplo: email.body
+   * @param htmlBody: html plano
+   * @param isTemplate: si es true,vSdebemos utilizar los campos  mailOptionsTemplateBody y mailOptionsContext
    * @param cc
    * @param bcc
    */
@@ -135,7 +135,7 @@ export default class EMail {
       subject,
       html: htmlBody
     };
-    //si es plantilla ajustamos el mailOptions por referencia, osea que esta funcion no retorna nada
+    //si es plantilla ajustamos el mailOptions por referencia
     if (isTemplate) {
       this.converterMailOptionsToTemplate(mailOptions, mailOptionsTemplateBody, mailOptionsContext);
     }
@@ -154,7 +154,7 @@ export default class EMail {
    * Funcion que convierte la configuracion mailOptions para que soporte la plantilla
    * elimina el objeto html y adiciona dos mas: template y context, que son necesario para que soporte plantilla de correos
    * @param mailOptions Datos de configuracion: to, cc, bcc, subject, html: htmlBody
-   * @param htmlBody Esta el nombre del archivo de la plantilla, por ejemplo: email.body
+   * @param mailOptionsTemplateBody Esta el nombre del archivo de la plantilla, por ejemplo: email.body
    */
   private static converterMailOptionsToTemplate(
     mailOptions: any,
@@ -174,7 +174,7 @@ export default class EMail {
     this.instance.transporter.use("compile", hbs(options));
     //quitamos el atributo html, y adicionamos template y context.... para que funcione con plantillas
     delete mailOptions.html;
-    mailOptions.template = mailOptionsTemplateBody; //cuando es template, en la variable htmlBody viene el nombre del body q usa la plantilla
+    mailOptions.template = mailOptionsTemplateBody; //nombre del body q usa la plantilla
     mailOptions.context = mailOptionsContext;
   }
 }

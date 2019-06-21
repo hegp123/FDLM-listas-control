@@ -1,8 +1,8 @@
 import { getListaControlWS, IComplianceRequest, IComplianceResponse, IComplianceResponseResultados } from "../services/compliance";
-import { IParametroValorEnvioCorreoEmail } from "./movilizate";
 import { RIESGO_ALTO, RIESGO_MEDIO, RIESGO_BAJO, RIESGO_NO_HAY } from "../constants/Constantes";
 import * as log from "../log/logger";
 import EMail from "../email/email";
+import { IParametroValorEnvioCorreoEmail } from "./topaz";
 const logger = log.logger(__filename);
 
 export default class Compliance {
@@ -175,7 +175,11 @@ export default class Compliance {
         fuenteConsulta: "Compliance y/o Vigia.... esto debe ser automatico :)",
         aplicacion: "Movilízate",
         usuario: "HGARCIA ",
-        oficina: "Bucaramanga"
+        oficina: "Bucaramanga",
+        cliente: {
+          nombre: "HECTOR EDUARDO GARCIA PICON",
+          identificacion: "7573655"
+        }
       }
     });
   }

@@ -58,6 +58,10 @@ export const EMAIL_CONFIG = {
   idParamSupportMail: 22
 };
 export const EMAIL_TEST_CONECTIVIDAD = false;
+export const ID_PARAM_CORREOS_LISTAS_CONTROL_MAIL = "34";
+export const ID_PARAM_ASUNTO_LISTAS_CONTROL_MAIL = "35";
+export const ID_PARAM_RUTA_ESTILOS = "37";
+export const ID_PARAM_CORREO_ADMIN = "nuevo registro, aun no sabemos el id";
 export const EMAIL_CONFIG_HECTOR = {
   host: "smtp.gmail.com",
   port: 465, //587
