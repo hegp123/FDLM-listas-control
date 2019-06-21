@@ -73,14 +73,54 @@ export default class EMail {
     });
   }
 
-  static sendMail(
-    to: string | Address | Array<string | Address>,
-    subject: string,
-    htmlBody: string,
-    isTemplate: boolean = false,
-    cc?: string | Address | Array<string | Address>,
-    bcc?: string | Address | Array<string | Address>
-  ) {
+  /**
+   * Funcion que envia correos con plantillas
+   * @param to
+   * @param subject
+   * @param templateName: es el nombre del archivo de la plantilla de correo, se le envia como htmlBody a la funcion enviar correo
+   * @param cc
+   * @param bcc
+   */
+  static sendMailTemplate({
+    to,
+    subject,
+    templateName,
+    cc,
+    bcc
+  }: {
+    to: string | Address | Array<string | Address>;
+    subject: string;
+    templateName: string;
+    cc?: string | Address | Array<string | Address>;
+    bcc?: string | Address | Array<string | Address>;
+  }) {
+    this.sendMail({ to, subject, htmlBody: templateName, isTemplate: true, cc, bcc });
+  }
+
+  /**
+   *
+   * @param to
+   * @param subject
+   * @param htmlBody: html plano o nombre del archivo de la plantilla
+   * @param isTemplate: si es true, en el campo htmlBody debe venir el nombre del archivo de la plantilla, por ejemplo: email.body
+   * @param cc
+   * @param bcc
+   */
+  static sendMail({
+    to,
+    subject,
+    htmlBody,
+    isTemplate = false,
+    cc,
+    bcc
+  }: {
+    to: string | Address | Array<string | Address>;
+    subject: string;
+    htmlBody: string;
+    isTemplate?: boolean;
+    cc?: string | Address | Array<string | Address>;
+    bcc?: string | Address | Array<string | Address>;
+  }) {
     let mailOptions: any = {
       // from: "hectoregarciap@hotmail.com",
       to,
@@ -89,91 +129,50 @@ export default class EMail {
       subject,
       html: htmlBody
     };
-    logger.debug(":::::::::::::::>  " + mailOptions.html);
     //si es plantilla ajustamos el mailOptions
     if (isTemplate) {
-      let options = {
-        viewEngine: {
-          extname: ".hbs",
-          layoutsDir: path.join(__dirname, "templates"),
-          defaultLayout: "template",
-          partialsDir: path.join(__dirname, "templates/partials/")
-        },
-        viewPath: path.join(__dirname, "templates"),
-        extName: ".hbs"
-      };
-      this.instance.transporter.use("compile", hbs(options));
-      //quitamos el atributo html, y adicionamos template y context.... para que funcione con plantillas
-      delete mailOptions.html;
-      mailOptions.template = htmlBody; //cuando es template, en la variable htmlBody viene el nombre de la plantilla
-      mailOptions.context = {
-        rutaEstilos: "https://movilizate.fundaciondelamujer.com:55698/css/",
-        fecha: "10 de junio del 2019",
-        correoAdmin: "desarrollo@fundaciondelamujer.com",
-        fuenteConsulta: "Compliance y/o Vigia.... esto debe ser automatico :)",
-        aplicacion: "Movilízate",
-        usuario: "HGARCIA ",
-        oficina: "Bucaramanga"
-      };
-      // Object.keys(mailOptions).map(
-      //   function(object){
-      //     json[object]["newKey"]='newValue'
-      // });
-      // mailOptions.map(i => (i.Country = "Nepal"));
-      // var obj: any = {};
-      // obj["name"] = "value";
-      // obj["anotherName"] = "anotherValue";
+      this.converterMailOptionsToTemplate(mailOptions, htmlBody);
     }
 
-    logger.debug(":::::::::::::::>  " + mailOptions.html);
     this.instance.transporter.sendMail(mailOptions, (err: Error, info: SentMessageInfo) => {
       if (err) {
-        logger.error("#####2 " + err);
+        logger.error(err);
       } else {
         logger.debug(info);
-        logger.debug("Message sent: %s", info.messageId);
+        logger.debug("Message sent: " + info.messageId);
       }
     });
   }
 
-  static sendMailTemplate(
-    to: string | Address | Array<string | Address>,
-    subject: string,
-    templateName: string,
-    cc?: string | Address | Array<string | Address>,
-    bcc?: string | Address | Array<string | Address>
-  ) {
-    this.sendMail(to, subject, templateName, true, cc, bcc);
-    // let options = {
-    //   viewEngine: {
-    //     extname: ".hbs",
-    //     layoutsDir: path.join(__dirname, "templates"),
-    //     defaultLayout: "template",
-    //     partialsDir: path.join(__dirname, "templates/partials/")
-    //   },
-    //   viewPath: path.join(__dirname, "templates"),
-    //   extName: ".hbs"
-    // };
-    // this.instance.transporter.use("compile", hbs(options));
-    // //send mail with options
-    // var mailOptions = {
-    //   from: "hectoregarciap@gmail.com",
-    //   to,
-    //   subject,
-    //   template: "email.body",
-    //   context: {
-    //     rutaEstilos: "https://movilizate.fundaciondelamujer.com:55698/css/",
-    //     fecha: "10 de junio del 2019",
-    //     correoAdmin: "desarrollo@fundaciondelamujer.com",
-    //     fuenteConsulta: "Compliance y/o Vigia.... esto debe ser automatico :)",
-    //     aplicacion: "Movilízate",
-    //     usuario: "HGARCIA ",
-    //     oficina: "Bucaramanga"
-    //   }
-    // };
-    // this.instance.transporter.sendMail(mailOptions),
-    //   function(error: any, response: any) {
-    //     console.log("mail sent to " + to);
-    //   };
+  /**
+   * Funcion que convierte la configuracion mailOptions para que soporte la plantilla
+   * elimina el objeto html y adiciona dos mas: template y context, que son necesario para que soporte plantilla de correos
+   * @param mailOptions Datos de configuracion: to, cc, bcc, subject, html: htmlBody
+   * @param htmlBody Esta el nombre del archivo de la plantilla, por ejemplo: email.body
+   */
+  private static converterMailOptionsToTemplate(mailOptions: any, htmlBody: string) {
+    let options = {
+      viewEngine: {
+        extname: ".hbs",
+        layoutsDir: path.join(__dirname, "templates"),
+        defaultLayout: "template",
+        partialsDir: path.join(__dirname, "templates/partials/")
+      },
+      viewPath: path.join(__dirname, "templates"),
+      extName: ".hbs"
+    };
+    this.instance.transporter.use("compile", hbs(options));
+    //quitamos el atributo html, y adicionamos template y context.... para que funcione con plantillas
+    delete mailOptions.html;
+    mailOptions.template = htmlBody; //cuando es template, en la variable htmlBody viene el nombre de la plantilla
+    mailOptions.context = {
+      rutaEstilos: "https://movilizate.fundaciondelamujer.com:55698/css/",
+      fecha: "10 de junio del 2019",
+      correoAdmin: "desarrollo@fundaciondelamujer.com",
+      fuenteConsulta: "Compliance y/o Vigia.... esto debe ser automatico :)",
+      aplicacion: "Movilízate",
+      usuario: "HGARCIA ",
+      oficina: "Bucaramanga"
+    };
   }
 }

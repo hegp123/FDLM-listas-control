@@ -106,7 +106,11 @@ test.post("/compliance", urlencodedParser, (req: Request, res: Response) => {
 });
 
 test.get("/sendemail", (req: Request, res: Response) => {
-  EMail.sendMail("hectoregarciap@gmail.com", "Test - Email", "<h1>Hola mundo!!</h1> <h3>Email en formato html</h3>");
+  EMail.sendMail({
+    to: "hectoregarciap@gmail.com",
+    subject: "Test - Email",
+    htmlBody: "<h1>Hola mundo!!</h1> <h3>Email en formato html</h3>"
+  });
 
   res.status(200).json({
     ok: true,
@@ -115,7 +119,12 @@ test.get("/sendemail", (req: Request, res: Response) => {
 });
 
 test.get("/sendemailtemplate", (req: Request, res: Response) => {
-  EMail.sendMailTemplate("hectoregarciap@gmail.com", "Test - Email", "email.body");
+  EMail.sendMailTemplate({
+    to: "hectoregarciap@gmail.com",
+    subject: "Test - Email",
+    templateName: "email.body",
+    cc: "gerson.pabon@fundaciondelamujer.com"
+  });
 
   res.status(200).json({
     ok: true,
