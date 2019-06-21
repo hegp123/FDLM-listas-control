@@ -130,7 +130,11 @@ test.get("/sendemailtemplate", (req: Request, res: Response) => {
       fuenteConsulta: "Compliance y/o Vigia.... esto debe ser automatico :)",
       aplicacion: "Movilízate",
       usuario: "HGARCIA ",
-      oficina: "Bucaramanga"
+      oficina: "Bucaramanga",
+      cliente: {
+        nombre: "HECTOR EDUARDO GARCIA PICON",
+        identificacion: "7573655"
+      }
     }
   });
 

@@ -182,9 +182,15 @@ export default class EMail {
 export interface IMailOptionsContext {
   rutaEstilos?: string;
   fecha?: string;
+  cliente?: ICliente;
   correoAdmin?: string;
   fuenteConsulta?: string;
   aplicacion?: string;
   usuario?: string;
   oficina?: string;
+}
+export interface ICliente {
+  nombre: string;
+  identificacion: string;
+  tipoIdentificacion?: string;
 }
