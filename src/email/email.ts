@@ -7,6 +7,7 @@ var hbs = require("nodemailer-express-handlebars");
 import Movilizate, { IEmailConfiguration } from "../business-logic/movilizate";
 const logger = log.logger(__filename);
 import path from "path";
+import { TEMPLATE_NOTIFICACION_CORREO } from "../constants/Constantes";
 
 export default class EMail {
   private static _instance: EMail;
@@ -77,24 +78,25 @@ export default class EMail {
    * Funcion que envia correos con plantillas
    * @param to
    * @param subject
-   * @param templateName: es el nombre del archivo de la plantilla de correo, se le envia como htmlBody a la funcion enviar correo
    * @param cc
    * @param bcc
    */
   static sendMailTemplate({
     to,
     subject,
-    templateName,
     cc,
-    bcc
+    bcc,
+    mailOptionsTemplateBody,
+    mailOptionsContext
   }: {
     to: string | Address | Array<string | Address>;
     subject: string;
-    templateName: string;
     cc?: string | Address | Array<string | Address>;
     bcc?: string | Address | Array<string | Address>;
+    mailOptionsTemplateBody: string;
+    mailOptionsContext: IMailOptionsContext;
   }) {
-    this.sendMail({ to, subject, htmlBody: templateName, isTemplate: true, cc, bcc });
+    this.sendMail({ to, subject, isTemplate: true, cc, bcc, mailOptionsTemplateBody, mailOptionsContext });
   }
 
   /**
@@ -112,14 +114,18 @@ export default class EMail {
     htmlBody,
     isTemplate = false,
     cc,
-    bcc
+    bcc,
+    mailOptionsTemplateBody,
+    mailOptionsContext
   }: {
     to: string | Address | Array<string | Address>;
     subject: string;
-    htmlBody: string;
+    htmlBody?: string;
     isTemplate?: boolean;
     cc?: string | Address | Array<string | Address>;
     bcc?: string | Address | Array<string | Address>;
+    mailOptionsTemplateBody?: string;
+    mailOptionsContext?: IMailOptionsContext;
   }) {
     let mailOptions: any = {
       // from: "hectoregarciap@hotmail.com",
@@ -129,14 +135,14 @@ export default class EMail {
       subject,
       html: htmlBody
     };
-    //si es plantilla ajustamos el mailOptions
+    //si es plantilla ajustamos el mailOptions por referencia, osea que esta funcion no retorna nada
     if (isTemplate) {
-      this.converterMailOptionsToTemplate(mailOptions, htmlBody);
+      this.converterMailOptionsToTemplate(mailOptions, mailOptionsTemplateBody, mailOptionsContext);
     }
 
     this.instance.transporter.sendMail(mailOptions, (err: Error, info: SentMessageInfo) => {
       if (err) {
-        logger.error(err);
+        logger.error(err.message);
       } else {
         logger.debug(info);
         logger.debug("Message sent: " + info.messageId);
@@ -150,12 +156,16 @@ export default class EMail {
    * @param mailOptions Datos de configuracion: to, cc, bcc, subject, html: htmlBody
    * @param htmlBody Esta el nombre del archivo de la plantilla, por ejemplo: email.body
    */
-  private static converterMailOptionsToTemplate(mailOptions: any, htmlBody: string) {
+  private static converterMailOptionsToTemplate(
+    mailOptions: any,
+    mailOptionsTemplateBody: string = "",
+    mailOptionsContext: IMailOptionsContext = {}
+  ) {
     let options = {
       viewEngine: {
         extname: ".hbs",
         layoutsDir: path.join(__dirname, "templates"),
-        defaultLayout: "template",
+        defaultLayout: TEMPLATE_NOTIFICACION_CORREO,
         partialsDir: path.join(__dirname, "templates/partials/")
       },
       viewPath: path.join(__dirname, "templates"),
@@ -164,15 +174,17 @@ export default class EMail {
     this.instance.transporter.use("compile", hbs(options));
     //quitamos el atributo html, y adicionamos template y context.... para que funcione con plantillas
     delete mailOptions.html;
-    mailOptions.template = htmlBody; //cuando es template, en la variable htmlBody viene el nombre de la plantilla
-    mailOptions.context = {
-      rutaEstilos: "https://movilizate.fundaciondelamujer.com:55698/css/",
-      fecha: "10 de junio del 2019",
-      correoAdmin: "desarrollo@fundaciondelamujer.com",
-      fuenteConsulta: "Compliance y/o Vigia.... esto debe ser automatico :)",
-      aplicacion: "Movilízate",
-      usuario: "HGARCIA ",
-      oficina: "Bucaramanga"
-    };
+    mailOptions.template = mailOptionsTemplateBody; //cuando es template, en la variable htmlBody viene el nombre del body q usa la plantilla
+    mailOptions.context = mailOptionsContext;
   }
+}
+
+export interface IMailOptionsContext {
+  rutaEstilos?: string;
+  fecha?: string;
+  correoAdmin?: string;
+  fuenteConsulta?: string;
+  aplicacion?: string;
+  usuario?: string;
+  oficina?: string;
 }

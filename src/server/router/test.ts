@@ -1,7 +1,7 @@
 import { Router, Request, Response } from "express";
 import bodyParser = require("body-parser");
 import Compliance from "../../business-logic/compliance";
-import EMail from "../../email/email";
+import EMail, { IMailOptionsContext } from "../../email/email";
 import MsSqlServer from "../../database/sqlserver";
 import { RequestError } from "mssql";
 import * as log from "../../log/logger";
@@ -122,8 +122,16 @@ test.get("/sendemailtemplate", (req: Request, res: Response) => {
   EMail.sendMailTemplate({
     to: "hectoregarciap@gmail.com",
     subject: "Test - Email",
-    templateName: "email.body",
-    cc: "gerson.pabon@fundaciondelamujer.com"
+    mailOptionsTemplateBody: "email.body",
+    mailOptionsContext: {
+      rutaEstilos: "https://movilizate.fundaciondelamujer.com:55698/css/",
+      fecha: "10 de junio del 2019",
+      correoAdmin: "desarrollo@fundaciondelamujer.com",
+      fuenteConsulta: "Compliance y/o Vigia.... esto debe ser automatico :)",
+      aplicacion: "Movilízate",
+      usuario: "HGARCIA ",
+      oficina: "Bucaramanga"
+    }
   });
 
   res.status(200).json({

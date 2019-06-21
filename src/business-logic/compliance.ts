@@ -164,10 +164,19 @@ export default class Compliance {
    */
   private processRiesgoNoTiene(debeEnviarCorreo: boolean) {
     logger.debug("--------> procesando riesgo NO_TIENE");
-    EMail.sendMail({
+    EMail.sendMailTemplate({
       to: "hectoregarciap@gmail.com",
-      subject: "Test - Tranquilo no tiene riesgo",
-      htmlBody: "<h1>Hola mundo!!</h1> <h3>Email en formato html</h3>"
+      subject: "Test - Email",
+      mailOptionsTemplateBody: "email.body",
+      mailOptionsContext: {
+        rutaEstilos: "https://movilizate.fundaciondelamujer.com:55698/css/",
+        fecha: "10 de junio del 2019",
+        correoAdmin: "desarrollo@fundaciondelamujer.com",
+        fuenteConsulta: "Compliance y/o Vigia.... esto debe ser automatico :)",
+        aplicacion: "Movilízate",
+        usuario: "HGARCIA ",
+        oficina: "Bucaramanga"
+      }
     });
   }
 }
