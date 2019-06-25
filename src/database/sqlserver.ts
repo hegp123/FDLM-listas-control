@@ -99,49 +99,46 @@ export default class MsSqlServer {
    * @param insertQuery ejemplo: insert into testtable (somecolumn, somecolumn2) values (@myval, @myval2)
    * @param values este valor es un json de la forma como esta el siguiente ejemplo: [{"name": "myval", "type": "mssql.VarChar", "value": "valor a insertar" }, { "name": "myval2", "type": "mssql.mssql.Int", "value": 12345 } ]
    */
-  static insert(insertQuery: string, values: any) {
-    return this.insertUpdateDelete(insertQuery, values);
+  static insert(insertQuery: string, values: any[], dataBase: mssql.ConnectionPool) {
+    return this.insertUpdateDelete(insertQuery, values, dataBase);
   }
 
-  static update(insertQuery: string, values: any) {
-    return this.insertUpdateDelete(insertQuery, values);
+  static update(insertQuery: string, values: any, dataBase: mssql.ConnectionPool) {
+    return this.insertUpdateDelete(insertQuery, values, dataBase);
   }
 
-  static delete(insertQuery: string, values: any) {
-    return this.insertUpdateDelete(insertQuery, values);
+  static delete(insertQuery: string, values: any, dataBase: mssql.ConnectionPool) {
+    return this.insertUpdateDelete(insertQuery, values, dataBase);
   }
 
   /**
    * Este metodo sirve para insert, update y delete
    * @param insertQuery ejemplo: insert into testtable (somecolumn, somecolumn2) values (@myval, @myval2)
-   * @param values este valor es un json de la forma como esta el siguiente ejemplo: [{"name": "myval", "type": "mssql.VarChar", "value": "valor a insertar" }, { "name": "myval2", "type": "mssql.mssql.Int", "value": 12345 } ]
+   * @param values este valor es un json de la forma como esta el siguiente ejemplo: [{"name": "myval", "type": mssql.VarChar, "value": "valor a insertar" }, { "name": "myval2", "type": mssql.Int, "value": 12345 } ]
    */
-  static insertUpdateDelete(insertQuery: string, values: any) {
+  private static insertUpdateDelete(insertQuery: string, values: ISqlValue[], dataBase: mssql.ConnectionPool) {
     return new Promise((resolve, reject) => {
-      let request = this.instance.poolConnectionMovilizate.request();
+      let request = dataBase.request();
 
-      values.forEach((name: string, type: ISqlType, value: string) => {
-        logger.debug(`############## name: ${name},    type:${type},    value:${value} ##############`);
-        request.input(name, type, value);
+      // logger.debug(`############## insertQuery: ${insertQuery}`);
+      // logger.debug(`############## values: ${JSON.stringify(values)}`);
+      values.forEach(value => {
+        // logger.debug(`############## name: ${value.name},    type:${value.type},    value:${value.value} ##############`);
+        request.input(value.name, value.type, value.value);
       });
 
-      request.query(insertQuery, (err, result) => {
-        if (err) {
-          logger.error("Error al intentar el insert: " + insertQuery);
-          logger.error(err);
-          reject(err);
+      request.query(insertQuery, (error, result) => {
+        // esto es lo que trae la variable result:  {"recordsets":[],"output":{},"rowsAffected":[1]}
+        if (error) {
+          logger.error(JSON.stringify(error));
+          reject(error);
         }
-
-        if (result === undefined || result.recordset.length === 0) {
-          reject("**********************");
-        } else {
-          resolve(result.recordset);
-        }
+        resolve({ ok: true, message: "El insert fué exitoso." });
       });
     });
   }
 
-  static insertUpdateDeleteWithPreparedStatement(insertQuery: string, values: any) {
+  private static insertUpdateDeleteWithPreparedStatement(insertQuery: string, values: any) {
     let ps = new mssql.PreparedStatement(this.instance.poolConnectionMovilizate);
 
     // values.forEach((name: string, type: ISqlType, value: string) => {
@@ -218,4 +215,10 @@ export default class MsSqlServer {
         });
     });
   }
+}
+
+export interface ISqlValue {
+  name: string;
+  type: any;
+  value: string | number | Date;
 }

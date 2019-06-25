@@ -1,5 +1,6 @@
 import * as log from "../log/logger";
-import MsSqlServer from "../database/sqlserver";
+import MsSqlServer, { ISqlValue } from "../database/sqlserver";
+import mssql from "mssql";
 const logger = log.logger(__filename);
 
 export default class Topaz {
@@ -16,6 +17,10 @@ export default class Topaz {
     logger.debug("Clase de Logica de Negocio de Topaz Inicializada !");
   }
 
+  /**
+   * Funcion que trae el valor de un parametro
+   * @param codigo
+   */
   getValorParametro(codigo: string) {
     return new Promise<IParametro>((resolve, reject) => {
       let query: string = this.queryGetValorParametro.replace("$param1", codigo);
@@ -35,6 +40,113 @@ export default class Topaz {
         .catch((error: Error) => {
           logger.error(error);
           reject(error);
+        });
+    });
+  }
+
+  /**
+   * Funcion que inserta en la tabla sl_lista_sarlaft_bloqueo_persona
+   */
+  insertBloqueoPersona({
+    tipoDocumento,
+    nrodocumento,
+    numsolicitud,
+    bloqueo,
+    nivelriesgo,
+    observacion
+  }: {
+    tipoDocumento: string;
+    nrodocumento: string;
+    numsolicitud: number;
+    bloqueo: number;
+    nivelriesgo: number;
+    observacion: string;
+  }) {
+    return new Promise((resolve, reject) => {
+      let values: ISqlValue[] = [
+        { name: "TipoDocumento", type: mssql.VarChar, value: tipoDocumento },
+        { name: "nrodocumento", type: mssql.VarChar, value: nrodocumento },
+        { name: "numsolicitud", type: mssql.Float, value: numsolicitud },
+        { name: "bloqueo", type: mssql.Int, value: bloqueo },
+        { name: "fecha", type: mssql.DateTime, value: new Date() },
+        { name: "nivelriesgo", type: mssql.Int, value: nivelriesgo },
+        { name: "observacion", type: mssql.VarChar, value: observacion }
+      ];
+      let insert = "insert into sl_lista_sarlaft_bloqueo_persona ";
+      insert += " (TipoDocumento, nrodocumento, numsolicitud, bloqueo, fecha, nivelriesgo,observacion) ";
+      insert += " values (@TipoDocumento, @nrodocumento, @numsolicitud, @bloqueo, @fecha, @nivelriesgo, @observacion)";
+      MsSqlServer.insert(insert, values, MsSqlServer.instance.getDataBaseTopaz())
+        .then(result => {
+          resolve(result);
+        })
+        .catch((error: Error) => {
+          logger.error(error);
+          reject(error.message);
+        });
+    });
+  }
+
+  /**
+   * Funcion que inserta en la tabla sl_lista_sarlaft_temporal_envio_correo
+   * @param param0
+   */
+  insertTemporalEnvioCorreo({ tipoDocumento, nrodocumento, numsolicitud }: { tipoDocumento: string; nrodocumento: string; numsolicitud: number }) {
+    return new Promise((resolve, reject) => {
+      let values: ISqlValue[] = [
+        { name: "TipoDocumento", type: mssql.VarChar, value: tipoDocumento },
+        { name: "nrodocumento", type: mssql.VarChar, value: nrodocumento },
+        { name: "numsolicitud", type: mssql.Float, value: numsolicitud }
+      ];
+      let insert = "insert into sl_lista_sarlaft_temporal_envio_correo ";
+      insert += " (TipoDocumento, nrodocumento, numsolicitud) ";
+      insert += " values (@TipoDocumento, @nrodocumento, @numsolicitud)";
+      MsSqlServer.insert(insert, values, MsSqlServer.instance.getDataBaseTopaz())
+        .then(result => {
+          resolve(result);
+        })
+        .catch((error: Error) => {
+          logger.error(error.message);
+          reject(error.message);
+        });
+    });
+  }
+
+  /**
+   * Funcion que inserta en la tabla sl_lista_sarlaft_detalle
+   * @param param0
+   */
+  insertDetalle({
+    riesgo,
+    lista,
+    numsolicitud,
+    nrodocumento,
+    descripcion
+  }: {
+    riesgo: string;
+    lista: string;
+    numsolicitud: number;
+    nrodocumento: string;
+    descripcion: string;
+  }) {
+    return new Promise((resolve, reject) => {
+      let values: ISqlValue[] = [
+        { name: "riesgo", type: mssql.VarChar, value: riesgo },
+        { name: "lista", type: mssql.VarChar, value: lista },
+        { name: "numsolicitud", type: mssql.Float, value: numsolicitud },
+        { name: "nrodocumento", type: mssql.VarChar, value: nrodocumento },
+        { name: "fechalog", type: mssql.DateTime, value: new Date() },
+        { name: "descripcion", type: mssql.VarChar, value: descripcion }
+      ];
+      let insert = "insert into sl_lista_sarlaft_detalle ";
+      insert += " (riesgo, lista, numsolicitud, nrodocumento, fechalog, descripcion) ";
+      insert += " values (@riesgo, @lista, @numsolicitud, @nrodocumento, @fechalog, @descripcion)";
+      MsSqlServer.insert(insert, values, MsSqlServer.instance.getDataBaseTopaz())
+        .then(result => {
+          resolve(result);
+        })
+        .catch((error: Error) => {
+          logger.error(error.message);
+          reject(error.message);
         });
     });
   }

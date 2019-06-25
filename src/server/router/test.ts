@@ -72,7 +72,12 @@ test.get("/getListaControl", (req: Request, res: Response) => {
       }
     })
     .catch(error => {
-      logger.error(error);
+      logger.error(error.errorMessage);
+      res.status(500).json({
+        ok: false,
+        errorMessage: error,
+        data
+      });
     });
 });
 

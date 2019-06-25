@@ -64,7 +64,7 @@ export default class ListaControl {
           resolve(processListaControl);
         } else {
           //aca revienta el proceso, no tiene sentido continuar si hay algun error en la logica de negocio
-          logger.error("BI: processListaControl.error" + processListaControl);
+          logger.error("BI: processListaControl.error" + processListaControl.errorMessage);
           reject(processListaControl);
         }
       } else {

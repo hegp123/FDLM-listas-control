@@ -2,7 +2,7 @@ import { getListaControlWS, IComplianceRequest, IComplianceResponse, ICompliance
 import { RIESGO_ALTO, RIESGO_MEDIO, RIESGO_BAJO, RIESGO_NO_HAY } from "../constants/Constantes";
 import * as log from "../log/logger";
 import EMail from "../email/email";
-import { IParametroValorEnvioCorreoEmail } from "./topaz";
+import Topaz, { IParametroValorEnvioCorreoEmail } from "./topaz";
 import { getFechaActual } from "../util/util";
 import { BODY_PLANTILLA_NOTIFICACION } from "../config/config";
 const logger = log.logger(__filename);
@@ -56,10 +56,16 @@ export default class Compliance {
     parametrosPlantilla: IMailOptionsContext;
   }) {
     logger.debug("BI: process");
-    return new Promise((resolve, reject) => {
+    //esta promesa no debe tener reject, porque el que la invoca controla esa parte
+    // cuando exista errores, le damos resolve, pero con ok : false
+    return new Promise(async resolve => {
       //
       logger.debug("-----------> NOMBRE: " + JSON.stringify(response.nombre));
-      parametrosPlantilla.cliente = { nombre: response.nombre, identificacion: response.datoConsultado, tipoDocumento: response.tipoDocumento };
+      parametrosPlantilla.cliente = {
+        nombre: response.nombre,
+        identificacion: response.datoConsultado,
+        tipoDocumento: response.tipoDocumento
+      };
 
       //obtenemos el tipo de riesgo encontrado
       let tipoRiesgo = this.getTipoRiesgo(response.resultados, listasTipo2);
@@ -69,7 +75,7 @@ export default class Compliance {
 
       switch (tipoRiesgo) {
         case RIESGO_ALTO: // tipo 3
-          this.processRiesgoAlto(debeEnviarCorreo);
+          this.processRiesgoAlto(response, debeEnviarCorreo, parametrosMail, parametrosPlantilla);
 
           resolve({ ok: true, response });
           return; // break;
@@ -88,11 +94,19 @@ export default class Compliance {
 
         default:
           //tipo 0
-          this.processRiesgoNoTiene(debeEnviarCorreo, parametrosMail, parametrosPlantilla);
-
-          resolve({ ok: true, response });
+          try {
+            await this.processRiesgoNoTiene(debeEnviarCorreo, parametrosMail, parametrosPlantilla);
+            resolve({ ok: true, response });
+          } catch (error) {
+            logger.error(error);
+            resolve({ ok: false, errorMessage: error });
+          }
           return; // break;
       }
+
+      // if (debeEnviarCorreo) {
+      //   this.processRiesgoAlto(debeEnviarCorreo, parametrosMail, parametrosPlantilla);
+      // }
     });
   }
 
@@ -134,13 +148,33 @@ export default class Compliance {
 
    * @param debeEnviarCorreo parametro para saber si debemo enviar email o no
    */
-  private processRiesgoAlto(debeEnviarCorreo: boolean) {
+  private processRiesgoAlto(
+    response: IComplianceResponse,
+    debeEnviarCorreo: boolean,
+    parametrosMail: IParametrosMail,
+    parametrosPlantilla: IMailOptionsContext
+  ) {
     logger.debug("--------> procesando riesgo ALTO");
 
-    EMail.sendMail({
-      to: "hectoregarciap@gmail.com",
-      subject: "Test - Riesgo Alto",
-      htmlBody: "<h1>Hola mundo!!</h1> <h3>Email en formato html</h3>"
+    let listas = response.resultados;
+    listas.forEach(resultado => {
+      let descripcion = resultado.descripcion;
+    });
+
+    EMail.sendMailTemplate({
+      to: parametrosMail.to,
+      subject: parametrosMail.subject,
+      mailOptionsTemplateBody: BODY_PLANTILLA_NOTIFICACION,
+      mailOptionsContext: {
+        rutaEstilos: parametrosPlantilla.rutaEstilos,
+        fecha: getFechaActual(), //"10 de junio del 2019",
+        correoAdmin: parametrosPlantilla.correoAdmin,
+        fuenteConsulta: parametrosPlantilla.fuenteConsulta,
+        aplicacion: "Movilízate",
+        usuario: "HGARCIA ",
+        oficina: "Bucaramanga",
+        cliente: parametrosPlantilla.cliente
+      }
     });
   }
 
@@ -177,24 +211,53 @@ export default class Compliance {
    *
    * @param debeEnviarCorreo parametro para saber si debemo enviar email o no
    */
-  private processRiesgoNoTiene(debeEnviarCorreo: boolean, parametrosMail: IParametrosMail, parametrosPlantilla: IMailOptionsContext) {
+  private async processRiesgoNoTiene(debeEnviarCorreo: boolean, parametrosMail: IParametrosMail, parametrosPlantilla: IMailOptionsContext) {
     logger.debug("--------> procesando riesgo NO_TIENE");
+    try {
+      await Topaz.instance.insertBloqueoPersona({
+        tipoDocumento: "cc",
+        nrodocumento: "7573655",
+        numsolicitud: 12345,
+        bloqueo: 1,
+        nivelriesgo: 3,
+        observacion: "Fresco :)"
+      });
 
-    EMail.sendMailTemplate({
-      to: parametrosMail.to,
-      subject: parametrosMail.subject,
-      mailOptionsTemplateBody: BODY_PLANTILLA_NOTIFICACION,
-      mailOptionsContext: {
-        rutaEstilos: parametrosPlantilla.rutaEstilos,
-        fecha: getFechaActual(), //"10 de junio del 2019",
-        correoAdmin: parametrosPlantilla.correoAdmin,
-        fuenteConsulta: parametrosPlantilla.fuenteConsulta,
-        aplicacion: "Movilízate",
-        usuario: "HGARCIA ",
-        oficina: "Bucaramanga",
-        cliente: parametrosPlantilla.cliente
-      }
-    });
+      await Topaz.instance.insertTemporalEnvioCorreo({
+        tipoDocumento: "cc",
+        nrodocumento: "7573655",
+        numsolicitud: 12345
+      });
+
+      await Topaz.instance.insertDetalle({
+        riesgo: "3",
+        lista: "lista tal",
+        numsolicitud: 12345,
+        nrodocumento: "7573655",
+        descripcion:
+          " El documento de identificación número 7573655 NO está incluido en el BDME que publica la CONTADURÍA GENERAL DE LA NACIÓN, de acuerdo con lo establecido en el artículo 2° de la Ley 901 de 2004"
+      });
+
+      logger.debug("--------> saliendo del insert riesgo NO_TIENE ");
+      // EMail.sendMailTemplate({
+      //   to: parametrosMail.to,
+      //   subject: parametrosMail.subject,
+      //   mailOptionsTemplateBody: BODY_PLANTILLA_NOTIFICACION,
+      //   mailOptionsContext: {
+      //     rutaEstilos: parametrosPlantilla.rutaEstilos,
+      //     fecha: getFechaActual(), //"10 de junio del 2019",
+      //     correoAdmin: parametrosPlantilla.correoAdmin,
+      //     fuenteConsulta: parametrosPlantilla.fuenteConsulta,
+      //     aplicacion: "Movilízate",
+      //     usuario: "HGARCIA ",
+      //     oficina: "Bucaramanga",
+      //     cliente: parametrosPlantilla.cliente
+      //   }
+      // });
+    } catch (error) {
+      logger.error(error);
+      throw error;
+    }
   }
 }
 
