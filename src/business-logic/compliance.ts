@@ -220,7 +220,7 @@ export default class Compliance {
         numsolicitud: 12345,
         bloqueo: 1,
         nivelriesgo: 3,
-        observacion: "Fresco :)"
+        observacion: "Fresc@ñ$ ' á  :)"
       });
 
       await Topaz.instance.insertTemporalEnvioCorreo({

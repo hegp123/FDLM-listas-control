@@ -222,3 +222,8 @@ export interface ISqlValue {
   type: any;
   value: string | number | Date;
 }
+
+// documentacion para revisar tranacciones
+// https://www.npmjs.com/package/mssql#cli
+// https://tediousjs.github.io/node-mssql/
+// https://leankit.com/blog/2015/06/painless-sql-server-with-nodejs-and-seriate/

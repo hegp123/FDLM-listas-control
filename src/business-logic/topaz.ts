@@ -70,7 +70,7 @@ export default class Topaz {
         { name: "bloqueo", type: mssql.Int, value: bloqueo },
         { name: "fecha", type: mssql.DateTime, value: new Date() },
         { name: "nivelriesgo", type: mssql.Int, value: nivelriesgo },
-        { name: "observacion", type: mssql.VarChar, value: observacion }
+        { name: "observacion", type: mssql.NVarChar, value: observacion }
       ];
       let insert = "insert into sl_lista_sarlaft_bloqueo_persona ";
       insert += " (TipoDocumento, nrodocumento, numsolicitud, bloqueo, fecha, nivelriesgo,observacion) ";
@@ -135,7 +135,7 @@ export default class Topaz {
         { name: "numsolicitud", type: mssql.Float, value: numsolicitud },
         { name: "nrodocumento", type: mssql.VarChar, value: nrodocumento },
         { name: "fechalog", type: mssql.DateTime, value: new Date() },
-        { name: "descripcion", type: mssql.VarChar, value: descripcion }
+        { name: "descripcion", type: mssql.NVarChar, value: descripcion }
       ];
       let insert = "insert into sl_lista_sarlaft_detalle ";
       insert += " (riesgo, lista, numsolicitud, nrodocumento, fechalog, descripcion) ";
