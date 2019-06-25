@@ -34,12 +34,12 @@ export const logger = function(fileName: string = "index") {
       //   format: format.combine(customFormat)
       // }),
       new transports.DailyRotateFile({
-        filename: `${LOG_PATH}/%DATE%-${LOG_FILE}`,
+        filename: `${LOG_PATH}/${LOG_FILE}-%DATE%.log`,
         datePattern: "YYYY-MM-DD",
         format: format.combine(customFormat),
         zippedArchive: true,
-        maxSize: "1m",
-        maxFiles: "3d"
+        maxSize: "50m",
+        maxFiles: "30d"
       })
     ]
   });

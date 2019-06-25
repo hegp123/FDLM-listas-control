@@ -65,8 +65,8 @@ export default class EMail {
             // debug: true
           };
           logger.error("00000000 PILAS NO OLVIDES QUITAR ESTA LINEA Y BORRAR MI CONTRASEÑA");
-          // resolve(emailConfiguracion);
-          resolve(EMAIL_CONFIG_HECTOR);
+          resolve(emailConfiguracion);
+          // resolve(EMAIL_CONFIG_HECTOR);
         })
         .catch((error: Error) => {
           logger.error(error);
