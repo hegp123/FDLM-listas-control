@@ -1,6 +1,7 @@
 ## funcionalidades
 - Conexion a multiples base de datos (Movilizate y vigia)
 - Envio de correos
+- plantilla para los correos
 - Manejo de Log
 - Consumo del web service de Compliance (REST)
 - Creacion de servicios Rest
@@ -11,12 +12,9 @@ PILAS con el cors
 
 - falta crear un registro nuevo en movilizate.configuracion para guardar el correo admin;
             correoAdmin: "desarrollo@fundaciondelamujer.com",//
-- guardar todo los registros que arroge la consulta a compliance
+- guardar todo los registros que arroge la consulta de compliance
 - Falta averiguar si tipo2 bloquea por contagio
-- nuevo parametro: al que se le debe enviar el correo.. cumplimiento@fundaciondelamujer.com
-- crear mockup del correo
-- falta en el correo adicionar la fuente de consulta  vigia o compliance
-- enviar correo cuando compliance no responda: asusto y contenido debe ser parametrizable
+- nuevo parametro: al que se le debe enviar el correo.. cumplimiento@fundaciondelamujer.com   
 
 
 ## prerequisitos
