@@ -37,7 +37,7 @@ test.get("/getListaControl", (req: Request, res: Response) => {
   // compliance
   let listaControl = ListaControl.instance;
   listaControl
-    .getListaControl(data)
+    .getListaControl(data, 12345)
     .then((resp: any) => {
       logger.info("WS: getListaControl:then1=> " + JSON.stringify(resp.ok));
       if (resp.ok) {

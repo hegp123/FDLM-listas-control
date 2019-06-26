@@ -1,8 +1,8 @@
 import { getListaControlWS, IComplianceRequest, IComplianceResponse, IComplianceResponseResultados } from "../services/compliance";
-import { RIESGO_ALTO, RIESGO_MEDIO, RIESGO_BAJO, RIESGO_NO_HAY } from "../constants/Constantes";
+import { RIESGO_ALTO, RIESGO_MEDIO, RIESGO_BAJO, RIESGO_NO_HAY, CLIENTE_BLOQUEADO } from "../constants/Constantes";
 import * as log from "../log/logger";
 import EMail from "../email/email";
-import Topaz, { IParametroValorEnvioCorreoEmail } from "./topaz";
+import Topaz, { IParametroValorEnvioCorreoEmail, ITemporalEnvioCorreo } from "./topaz";
 import { getFechaActual } from "../util/util";
 import { BODY_PLANTILLA_NOTIFICACION } from "../config/config";
 const logger = log.logger(__filename);
@@ -47,13 +47,15 @@ export default class Compliance {
     tipoRiesgoEnviaCorreo,
     listasTipo2,
     parametrosMail,
-    parametrosPlantilla
+    parametrosPlantilla,
+    numeroSolicitud
   }: {
     response: IComplianceResponse;
     tipoRiesgoEnviaCorreo: IParametroValorEnvioCorreoEmail[];
     listasTipo2: string[];
     parametrosMail: IParametrosMail;
     parametrosPlantilla: IMailOptionsContext;
+    numeroSolicitud: number;
   }) {
     logger.debug("BI: process");
     //esta promesa no debe tener reject, porque el que la invoca controla esa parte
@@ -75,27 +77,39 @@ export default class Compliance {
 
       switch (tipoRiesgo) {
         case RIESGO_ALTO: // tipo 3
-          this.processRiesgoAlto(response, debeEnviarCorreo, parametrosMail, parametrosPlantilla);
-
-          resolve({ ok: true, response });
+          try {
+            await this.processRiesgoAlto(response, tipoRiesgo, listasTipo2, numeroSolicitud);
+            resolve({ ok: true, response });
+          } catch (error) {
+            logger.error(error);
+            resolve({ ok: false, errorMessage: error });
+          }
           return; // break;
 
         case RIESGO_MEDIO: //tipo 2   tambien debemos bloquear a la persona, segun documento
-          this.processRiesgoMedio(debeEnviarCorreo);
-
-          resolve({ ok: true, response });
+          try {
+            await this.processRiesgoMedio(debeEnviarCorreo);
+            resolve({ ok: true, response });
+          } catch (error) {
+            logger.error(error);
+            resolve({ ok: false, errorMessage: error });
+          }
           return; // break;
 
         case RIESGO_BAJO: //tipo 1
-          this.processRiesgoBajo(debeEnviarCorreo);
-
-          resolve({ ok: true, response });
+          try {
+            await this.processRiesgoBajo(debeEnviarCorreo);
+            resolve({ ok: true, response });
+          } catch (error) {
+            logger.error(error);
+            resolve({ ok: false, errorMessage: error });
+          }
           return; // break;
 
         default:
           //tipo 0
           try {
-            await this.processRiesgoNoTiene(debeEnviarCorreo, parametrosMail, parametrosPlantilla);
+            await this.processRiesgoNoTiene(response, debeEnviarCorreo, parametrosMail, parametrosPlantilla, numeroSolicitud);
             resolve({ ok: true, response });
           } catch (error) {
             logger.error(error);
@@ -108,6 +122,180 @@ export default class Compliance {
       //   this.processRiesgoAlto(debeEnviarCorreo, parametrosMail, parametrosPlantilla);
       // }
     });
+  }
+
+  /**
+   * Funcion que se encarga de hacer el proceso cuando es un riesgo ALTO, osea tipo 3
+   // aca toca procesar... bloquear el usuario
+   // INSERTAR EN TABLA DE BLOQUEO Y BLOQUEAMOS LOS USUARIOS QUE PERTENEZCAN A ESTE NUMERO DE SOLICITUD
+   // , OSEA LOS QUE ESTAN EN LA TABLA TEMPORAL
+   //ENVIAMOS CORREO SI ES NECESARIO
+
+   * @param debeEnviarCorreo parametro para saber si debemo enviar email o no
+   */
+  private async processRiesgoAlto(response: IComplianceResponse, tipoRiesgo: number, listasTipo2: string[], numeroSolicitud: number) {
+    logger.debug("--------> procesando riesgo ALTO");
+    try {
+      //guardando las listas y sus detalles
+      let listas = response.resultados;
+      let datoConsultado = response.datoConsultado.toString();
+      let emailDescription: IMailDescription[] = [];
+      let index: number = 0;
+      listas.forEach(async resultado => {
+        let descripcion: string = resultado.descripcion;
+        let riesgo = this.getTipoRiesgoPorResultado(resultado, listasTipo2);
+        if (descripcion.length > 0) {
+          logger.debug("index: " + index);
+          emailDescription.push({
+            riesgo: riesgo.toString(),
+            lista: resultado.lista,
+            descripcion: descripcion.toString()
+          });
+          index = index + 1;
+          // if (resultado.lista === "GovermentWantedUsaService") {
+          await Topaz.instance.insertDetalle({
+            riesgo: riesgo.toString(),
+            lista: resultado.lista,
+            numsolicitud: numeroSolicitud,
+            nrodocumento: datoConsultado,
+            descripcion: descripcion.toString()
+          });
+
+          // }
+        }
+      });
+      logger.debug("emailDescription: " + emailDescription);
+
+      //consultamos las otras personas que pertenecen a la solicitud, para bloquearlas
+      let personasABloquear: ITemporalEnvioCorreo[] = await Topaz.instance.getPersonasTemporalesXNumeroSolicitud(numeroSolicitud);
+      // adicionamos al cliente actualmente consultado y aparece en alguna de las listas con riesgo 3, entonces este man afecta a los demas consultados previamente
+      personasABloquear.push({
+        TipoDocumento: response.tipoDocumento,
+        nrodocumento: datoConsultado,
+        numsolicitud: numeroSolicitud
+      });
+
+      //mandand a bloquear al cliente actual y a su combo que haian pasado limpio en las listas
+      personasABloquear.forEach(async persona => {
+        await Topaz.instance.insertBloqueoPersona({
+          tipoDocumento: persona.TipoDocumento,
+          nrodocumento: persona.nrodocumento,
+          numsolicitud: persona.numsolicitud,
+          bloqueo: CLIENTE_BLOQUEADO,
+          nivelriesgo: tipoRiesgo, // a todos se le aplica el riesgo 3, por contagio
+          observacion:
+            persona.nrodocumento === datoConsultado
+              ? `Se bloqueó porque tiene riesgo tipo: ${tipoRiesgo}`
+              : `Se bloqueó por contagio del cliento con documento número: ${datoConsultado} y número de solicitud ${numeroSolicitud}`
+        });
+      });
+
+      //ahora limpiamos la tabla temporal, porque ya la utilizamos
+      await Topaz.instance.deleteTemporalEnvioCorreo({ numsolicitud: numeroSolicitud });
+      //
+    } catch (error) {
+      logger.error(error);
+      throw error;
+    }
+  }
+
+  /**
+   * Funcion que se encarga de hacer el proceso cuando es un riesgo MEDIO, osea tipo 2
+   * SOLO INSERTAR EN TABLA DE BLOQUEO, NO BLOQUEAMOS LOS USUARIOS QUE PERTENEZCAN A ESTE NUMERO DE SOLICITUD
+   * ENVIAMOS CORREO SI ES NECESARIO
+   *
+   * @param debeEnviarCorreo parametro para saber si debemo enviar email o no
+   */
+  private async processRiesgoMedio(debeEnviarCorreo: boolean) {
+    logger.debug("--------> procesando riesgo MEDIO");
+    try {
+      // await
+    } catch (error) {
+      logger.error(error);
+      throw error;
+    }
+  }
+
+  /**
+   * Funcion que se encarga de hacer el proceso cuando es un riesgo BAJO, osea tipo 1
+   * Por favor analizar la vinculación por parte del Director de Oficina”
+   * dejando el nombre de la lista donde se genera la advertencia
+   * y la descripción que es cuando el atributo “tieneResultados” = true.
+   * INSERTAR EN TABLA TEMPORAL
+   * ENVIAMOS CORREO SI ES NECESARIO
+   *
+   * @param debeEnviarCorreo parametro para saber si debemo enviar email o no
+   */
+  private async processRiesgoBajo(debeEnviarCorreo: boolean) {
+    logger.debug("--------> procesando riesgo BAJO");
+    try {
+      // await
+    } catch (error) {
+      logger.error(error);
+      throw error;
+    }
+  }
+
+  /**
+   * Funcion que se encarga de hacer el proceso cuando es un riesgo NO_TIENE, osea tipo 0
+   * INSERTAR EN TABLA TEMPORAL
+   * ENVIAMOS CORREO SI ES NECESARIO
+   *
+   * @param debeEnviarCorreo parametro para saber si debemo enviar email o no
+   */
+  private async processRiesgoNoTiene(
+    response: IComplianceResponse,
+    debeEnviarCorreo: boolean,
+    parametrosMail: IParametrosMail,
+    parametrosPlantilla: IMailOptionsContext,
+    numeroSolicitud: number
+  ) {
+    logger.debug("--------> procesando riesgo NO_TIENE");
+    try {
+      // await Topaz.instance.insertBloqueoPersona({
+      //   tipoDocumento: "cc",
+      //   nrodocumento: "7573655",
+      //   numsolicitud: numeroSolicitud,
+      //   bloqueo: 1,
+      //   nivelriesgo: 3,
+      //   observacion: "Fresc@ñ$ ' á  :)"
+      // });
+
+      await Topaz.instance.insertTemporalEnvioCorreo({
+        tipoDocumento: response.tipoDocumento,
+        nrodocumento: response.datoConsultado.toString(),
+        numsolicitud: numeroSolicitud
+      });
+
+      // await Topaz.instance.insertDetalle({
+      //   riesgo: "3",
+      //   lista: "lista tal",
+      //   numsolicitud: numeroSolicitud,
+      //   nrodocumento: "7573655",
+      //   descripcion:
+      //     " El documento de identificación número 7573655 NO está incluido en el BDME que publica la CONTADURÍA GENERAL DE LA NACIÓN, de acuerdo con lo establecido en el artículo 2° de la Ley 901 de 2004"
+      // });
+
+      logger.debug("--------> saliendo del insert riesgo NO_TIENE ");
+      // EMail.sendMailTemplate({
+      //   to: parametrosMail.to,
+      //   subject: parametrosMail.subject,
+      //   mailOptionsTemplateBody: BODY_PLANTILLA_NOTIFICACION,
+      //   mailOptionsContext: {
+      //     rutaEstilos: parametrosPlantilla.rutaEstilos,
+      //     fecha: getFechaActual(), //"10 de junio del 2019",
+      //     correoAdmin: parametrosPlantilla.correoAdmin,
+      //     fuenteConsulta: parametrosPlantilla.fuenteConsulta,
+      //     aplicacion: "Movilízate",
+      //     usuario: "HGARCIA ",
+      //     oficina: "Bucaramanga",
+      //     cliente: parametrosPlantilla.cliente
+      //   }
+      // });
+    } catch (error) {
+      logger.error(error);
+      throw error;
+    }
   }
 
   /**
@@ -139,125 +327,24 @@ export default class Compliance {
     return RIESGO_NO_HAY;
   }
 
-  /**
-   * Funcion que se encarga de hacer el proceso cuando es un riesgo ALTO, osea tipo 3
-   // aca toca procesar... bloquear el usuario
-   // INSERTAR EN TABLA DE BLOQUEO Y BLOQUEAMOS LOS USUARIOS QUE PERTENEZCAN A ESTE NUMERO DE SOLICITUD
-   // , OSEA LOS QUE ESTAN EN LA TABLA TEMPORAL
-   //ENVIAMOS CORREO SI ES NECESARIO
-
-   * @param debeEnviarCorreo parametro para saber si debemo enviar email o no
-   */
-  private processRiesgoAlto(
-    response: IComplianceResponse,
-    debeEnviarCorreo: boolean,
-    parametrosMail: IParametrosMail,
-    parametrosPlantilla: IMailOptionsContext
-  ) {
-    logger.debug("--------> procesando riesgo ALTO");
-
-    let listas = response.resultados;
-    listas.forEach(resultado => {
-      let descripcion = resultado.descripcion;
-    });
-
-    EMail.sendMailTemplate({
-      to: parametrosMail.to,
-      subject: parametrosMail.subject,
-      mailOptionsTemplateBody: BODY_PLANTILLA_NOTIFICACION,
-      mailOptionsContext: {
-        rutaEstilos: parametrosPlantilla.rutaEstilos,
-        fecha: getFechaActual(), //"10 de junio del 2019",
-        correoAdmin: parametrosPlantilla.correoAdmin,
-        fuenteConsulta: parametrosPlantilla.fuenteConsulta,
-        aplicacion: "Movilízate",
-        usuario: "HGARCIA ",
-        oficina: "Bucaramanga",
-        cliente: parametrosPlantilla.cliente
-      }
-    });
-  }
-
-  /**
-   * Funcion que se encarga de hacer el proceso cuando es un riesgo MEDIO, osea tipo 2
-   * SOLO INSERTAR EN TABLA DE BLOQUEO, NO BLOQUEAMOS LOS USUARIOS QUE PERTENEZCAN A ESTE NUMERO DE SOLICITUD
-   * ENVIAMOS CORREO SI ES NECESARIO
-   *
-   * @param debeEnviarCorreo parametro para saber si debemo enviar email o no
-   */
-  private processRiesgoMedio(debeEnviarCorreo: boolean) {
-    logger.debug("--------> procesando riesgo MEDIO");
-    //
-  }
-
-  /**
-   * Funcion que se encarga de hacer el proceso cuando es un riesgo BAJO, osea tipo 1
-   * Por favor analizar la vinculación por parte del Director de Oficina”
-   * dejando el nombre de la lista donde se genera la advertencia
-   * y la descripción que es cuando el atributo “tieneResultados” = true.
-   * INSERTAR EN TABLA TEMPORAL
-   * ENVIAMOS CORREO SI ES NECESARIO
-   *
-   * @param debeEnviarCorreo parametro para saber si debemo enviar email o no
-   */
-  private processRiesgoBajo(debeEnviarCorreo: boolean) {
-    logger.debug("--------> procesando riesgo BAJO");
-  }
-
-  /**
-   * Funcion que se encarga de hacer el proceso cuando es un riesgo NO_TIENE, osea tipo 0
-   * INSERTAR EN TABLA TEMPORAL
-   * ENVIAMOS CORREO SI ES NECESARIO
-   *
-   * @param debeEnviarCorreo parametro para saber si debemo enviar email o no
-   */
-  private async processRiesgoNoTiene(debeEnviarCorreo: boolean, parametrosMail: IParametrosMail, parametrosPlantilla: IMailOptionsContext) {
-    logger.debug("--------> procesando riesgo NO_TIENE");
-    try {
-      await Topaz.instance.insertBloqueoPersona({
-        tipoDocumento: "cc",
-        nrodocumento: "7573655",
-        numsolicitud: 12345,
-        bloqueo: 1,
-        nivelriesgo: 3,
-        observacion: "Fresc@ñ$ ' á  :)"
-      });
-
-      await Topaz.instance.insertTemporalEnvioCorreo({
-        tipoDocumento: "cc",
-        nrodocumento: "7573655",
-        numsolicitud: 12345
-      });
-
-      await Topaz.instance.insertDetalle({
-        riesgo: "3",
-        lista: "lista tal",
-        numsolicitud: 12345,
-        nrodocumento: "7573655",
-        descripcion:
-          " El documento de identificación número 7573655 NO está incluido en el BDME que publica la CONTADURÍA GENERAL DE LA NACIÓN, de acuerdo con lo establecido en el artículo 2° de la Ley 901 de 2004"
-      });
-
-      logger.debug("--------> saliendo del insert riesgo NO_TIENE ");
-      // EMail.sendMailTemplate({
-      //   to: parametrosMail.to,
-      //   subject: parametrosMail.subject,
-      //   mailOptionsTemplateBody: BODY_PLANTILLA_NOTIFICACION,
-      //   mailOptionsContext: {
-      //     rutaEstilos: parametrosPlantilla.rutaEstilos,
-      //     fecha: getFechaActual(), //"10 de junio del 2019",
-      //     correoAdmin: parametrosPlantilla.correoAdmin,
-      //     fuenteConsulta: parametrosPlantilla.fuenteConsulta,
-      //     aplicacion: "Movilízate",
-      //     usuario: "HGARCIA ",
-      //     oficina: "Bucaramanga",
-      //     cliente: parametrosPlantilla.cliente
-      //   }
-      // });
-    } catch (error) {
-      logger.error(error);
-      throw error;
+  private getTipoRiesgoPorResultado(resultado: IComplianceResponseResultados, listasTipo2: string[]) {
+    let listaTieneRiesgo3 = resultado.presentaRiesgo && !listasTipo2.includes(resultado.lista);
+    if (listaTieneRiesgo3) {
+      return RIESGO_ALTO;
     }
+
+    let listaTieneRiesgo2 = resultado.presentaRiesgo && listasTipo2.includes(resultado.lista);
+    if (listaTieneRiesgo2) {
+      return RIESGO_MEDIO;
+    }
+
+    //lista con solo presentaadvertencia = true y presenta riesgo false
+    let listaTieneRiesgo1 = !resultado.presentaRiesgo && resultado.presentaAdvertencia;
+    if (listaTieneRiesgo1) {
+      return RIESGO_BAJO;
+    }
+
+    return RIESGO_NO_HAY;
   }
 }
 
@@ -281,4 +368,10 @@ export interface ICliente {
 export interface IParametrosMail {
   to: string;
   subject: string;
+}
+
+export interface IMailDescription {
+  riesgo: string;
+  lista: string;
+  descripcion: string;
 }

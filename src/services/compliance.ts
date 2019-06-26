@@ -75,7 +75,7 @@ export interface IComplianceResponse {
   tipoDocumento: string;
   resultados: IComplianceResponseResultados[];
   totalFuentesConError: number;
-  datoConsultado: string;
+  datoConsultado: string; // numero de documento
   totalFuentesConsultadas: number;
   idConsulta: number;
   nombre: string;
@@ -95,7 +95,7 @@ export interface IComplianceResponseResultados {
    * -> "descripcion": [],
    * -> "descripcion": [ "sinResultados: XXXXXXX"	]
    */
-  descripcion: string[]; //ver explicacion abajo
+  descripcion: string; //ver explicacion abajo
   tipo: string;
   duracion: number; // no estaba en la documentacion
   presentaRiesgo: boolean;

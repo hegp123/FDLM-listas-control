@@ -8,6 +8,9 @@ export default class Topaz {
   private queryTransactionIsolation: string = "set transaction isolation level read uncommitted ";
   private queryGetValorParametro: string =
     this.queryTransactionIsolation + `select Descripcion, Valor from sl_lista_sarlaft_parametro where Codigo = '$param1'`;
+  private queryGetPersonasXNumeroSolicitud: string =
+    this.queryTransactionIsolation +
+    `select  TipoDocumento, nrodocumento, numsolicitud from sl_lista_sarlaft_temporal_envio_correo where numsolicitud = $param1`;
 
   public static get instance() {
     return this._instance || (this._instance = new this());
@@ -35,6 +38,31 @@ export default class Topaz {
             });
           } else {
             resolve(results[0]);
+          }
+        })
+        .catch((error: Error) => {
+          logger.error(error);
+          reject(error);
+        });
+    });
+  }
+
+  /**
+   * Funcion que trae las personas consultadas en la lista que no tuvieron riesgos y han sido almacenadas por solicitud
+   * Las necesitamos para mandarlas a bloquear, porque alguien de la misma solicitud está reportado en las listas :(
+   * @param numSolicitud
+   */
+  getPersonasTemporalesXNumeroSolicitud(numSolicitud: number) {
+    return new Promise<ITemporalEnvioCorreo[]>((resolve, reject) => {
+      let query: string = this.queryGetPersonasXNumeroSolicitud.replace("$param1", numSolicitud.toString());
+      //   logger.info(query);
+      MsSqlServer.ejecutarQuery(query, MsSqlServer.instance.getDataBaseTopaz())
+        .then((results: ITemporalEnvioCorreo[]) => {
+          // logger.debug("resultado => " + results);
+          if (results.length === 0) {
+            resolve([]);
+          } else {
+            resolve(results);
           }
         })
         .catch((error: Error) => {
@@ -150,6 +178,29 @@ export default class Topaz {
         });
     });
   }
+
+  /**
+   * Funcion que elimina todos los registros temporales de una solicitud
+   * Se elimina porque ya se utilizo para bloquearlos, entones despues de bloqueados ya no son necesarios, seria basura
+   * @param param0
+   */
+  deleteTemporalEnvioCorreo({ numsolicitud }: { numsolicitud: number }) {
+    return new Promise((resolve, reject) => {
+      let values: ISqlValue[] = [{ name: "numsolicitud", type: mssql.Float, value: numsolicitud }];
+      let deleteQuery = "delete from sl_lista_sarlaft_temporal_envio_correo where numsolicitud = @numsolicitud ";
+
+      MsSqlServer.delete(deleteQuery, values, MsSqlServer.instance.getDataBaseTopaz())
+        .then(result => {
+          resolve(result);
+        })
+        .catch((error: Error) => {
+          logger.error(error.message);
+          reject(error.message);
+        });
+    });
+  }
+  //
+  //
 }
 
 export interface IParametro {
@@ -164,4 +215,10 @@ export interface IParametroValorEnvioCorreoEmail {
 
 export interface IParametroValorListasTipo2 {
   lista: string;
+}
+
+export interface ITemporalEnvioCorreo {
+  TipoDocumento: string;
+  nrodocumento: string;
+  numsolicitud: number;
 }

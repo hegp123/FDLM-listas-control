@@ -133,7 +133,7 @@ export default class MsSqlServer {
           logger.error(JSON.stringify(error));
           reject(error);
         }
-        resolve({ ok: true, message: "El insert fué exitoso." });
+        resolve({ ok: true, message: "El proceso fué exitoso." });
       });
     });
   }

@@ -26,7 +26,7 @@ export default class ListaControl {
     logger.debug("Clase ListaControl Inicializada !");
   }
 
-  public getListaControl(dataToConsult: IComplianceRequest) {
+  public getListaControl(dataToConsult: IComplianceRequest, numeroSolicitud: number) {
     // logger.debug("XXXX-ListaControl: getListaControl");
     return new Promise(async (resolve, reject) => {
       //   logger.debug("XXXX-1-ListaControl: getListaControl");
@@ -55,7 +55,8 @@ export default class ListaControl {
           tipoRiesgoEnviaCorreo,
           listasTipo2,
           parametrosMail,
-          parametrosPlantilla
+          parametrosPlantilla,
+          numeroSolicitud
         });
         // logger.debug("XXXX-4-ListaControl: getListaControl");
         if (processListaControl.ok) {
