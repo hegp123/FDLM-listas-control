@@ -4,7 +4,7 @@ import * as log from "../log/logger";
 import EMail from "../email/email";
 import Topaz, { IParametroValorEnvioCorreoEmail, ITemporalEnvioCorreo } from "./topaz";
 import { getFechaActual } from "../util/util";
-import { BODY_PLANTILLA_NOTIFICACION } from "../config/config";
+import { BODY_PLANTILLA_NOTIFICACION, MAX_TEXTO_PARA_DESCRIPCION_LISTA } from "../config/config";
 const logger = log.logger(__filename);
 
 export default class Compliance {
@@ -70,15 +70,23 @@ export default class Compliance {
       };
 
       //obtenemos el tipo de riesgo encontrado
-      let tipoRiesgo = this.getTipoRiesgo(response.resultados, listasTipo2);
+      let tipoRiesgo: number = this.getTipoRiesgo(response.resultados, listasTipo2);
       logger.info("-----------> TIPO DE RIESGO " + tipoRiesgo);
-      let debeEnviarCorreo = tipoRiesgoEnviaCorreo.filter(riesgo => riesgo.tipo === tipoRiesgo && riesgo.notificar).length > 0;
+      let debeEnviarCorreo: boolean = tipoRiesgoEnviaCorreo.filter(riesgo => riesgo.tipo === tipoRiesgo && riesgo.notificar).length > 0;
       logger.info("-----------> DEBE ENVIAR CORREO " + debeEnviarCorreo);
 
       switch (tipoRiesgo) {
         case RIESGO_ALTO: // tipo 3
           try {
-            await this.processRiesgoAlto(response, tipoRiesgo, listasTipo2, numeroSolicitud);
+            await this.processRiesgoAlto({
+              response,
+              tipoRiesgo,
+              listasTipo2,
+              numeroSolicitud,
+              debeEnviarCorreo,
+              parametrosMail,
+              parametrosPlantilla
+            });
             resolve({ ok: true, response });
           } catch (error) {
             logger.error(error);
@@ -133,7 +141,23 @@ export default class Compliance {
 
    * @param debeEnviarCorreo parametro para saber si debemo enviar email o no
    */
-  private async processRiesgoAlto(response: IComplianceResponse, tipoRiesgo: number, listasTipo2: string[], numeroSolicitud: number) {
+  private async processRiesgoAlto({
+    response,
+    tipoRiesgo,
+    listasTipo2,
+    numeroSolicitud,
+    debeEnviarCorreo,
+    parametrosMail,
+    parametrosPlantilla
+  }: {
+    response: IComplianceResponse;
+    tipoRiesgo: number;
+    listasTipo2: string[];
+    numeroSolicitud: number;
+    debeEnviarCorreo: boolean;
+    parametrosMail: IParametrosMail;
+    parametrosPlantilla: IMailOptionsContext;
+  }) {
     logger.debug("--------> procesando riesgo ALTO");
     try {
       //guardando las listas y sus detalles
@@ -145,7 +169,7 @@ export default class Compliance {
         let descripcion: string = resultado.descripcion;
         let riesgo = this.getTipoRiesgoPorResultado(resultado, listasTipo2);
         if (descripcion.length > 0) {
-          logger.debug("index: " + index);
+          // logger.debug("index: " + index);
           emailDescription.push({
             riesgo: riesgo.toString(),
             lista: resultado.lista,
@@ -165,38 +189,59 @@ export default class Compliance {
         }
       });
       logger.debug("emailDescription: " + emailDescription);
+      emailDescription.sort(function(a: any, b: any) {
+        return b.riesgo - a.riesgo;
+      });
+      EMail.sendMailTemplate({
+        to: parametrosMail.to,
+        subject: parametrosMail.subject,
+        mailOptionsTemplateBody: BODY_PLANTILLA_NOTIFICACION,
+        mailOptionsContext: {
+          rutaEstilos: parametrosPlantilla.rutaEstilos,
+          fecha: getFechaActual(), //"10 de junio del 2019",
+          correoAdmin: parametrosPlantilla.correoAdmin,
+          fuenteConsulta: parametrosPlantilla.fuenteConsulta,
+          aplicacion: "Movilízate",
+          usuario: "HGARCIA ",
+          oficina: "Bucaramanga",
+          cliente: parametrosPlantilla.cliente,
+          emailDescription
+        }
+      });
 
       //consultamos las otras personas que pertenecen a la solicitud, para bloquearlas
-      let personasABloquear: ITemporalEnvioCorreo[] = await Topaz.instance.getPersonasTemporalesXNumeroSolicitud(numeroSolicitud);
-      // adicionamos al cliente actualmente consultado y aparece en alguna de las listas con riesgo 3, entonces este man afecta a los demas consultados previamente
-      personasABloquear.push({
-        TipoDocumento: response.tipoDocumento,
-        nrodocumento: datoConsultado,
-        numsolicitud: numeroSolicitud
-      });
-
-      //mandand a bloquear al cliente actual y a su combo que haian pasado limpio en las listas
-      personasABloquear.forEach(async persona => {
-        await Topaz.instance.insertBloqueoPersona({
-          tipoDocumento: persona.TipoDocumento,
-          nrodocumento: persona.nrodocumento,
-          numsolicitud: persona.numsolicitud,
-          bloqueo: CLIENTE_BLOQUEADO,
-          nivelriesgo: tipoRiesgo, // a todos se le aplica el riesgo 3, por contagio
-          observacion:
-            persona.nrodocumento === datoConsultado
-              ? `Se bloqueó porque tiene riesgo tipo: ${tipoRiesgo}`
-              : `Se bloqueó por contagio del cliento con documento número: ${datoConsultado} y número de solicitud ${numeroSolicitud}`
-        });
-      });
-
-      //ahora limpiamos la tabla temporal, porque ya la utilizamos
-      await Topaz.instance.deleteTemporalEnvioCorreo({ numsolicitud: numeroSolicitud });
+      await this.bloquearYLimpiar(numeroSolicitud, response, datoConsultado, tipoRiesgo);
       //
     } catch (error) {
       logger.error(error);
       throw error;
     }
+  }
+
+  private async bloquearYLimpiar(numeroSolicitud: number, response: IComplianceResponse, datoConsultado: string, tipoRiesgo: number) {
+    let personasABloquear: ITemporalEnvioCorreo[] = await Topaz.instance.getPersonasTemporalesXNumeroSolicitud(numeroSolicitud);
+    // adicionamos al cliente actualmente consultado y aparece en alguna de las listas con riesgo 3, entonces este man afecta a los demas consultados previamente
+    personasABloquear.push({
+      TipoDocumento: response.tipoDocumento,
+      nrodocumento: datoConsultado,
+      numsolicitud: numeroSolicitud
+    });
+    //mandand a bloquear al cliente actual y a su combo que haian pasado limpio en las listas
+    personasABloquear.forEach(async persona => {
+      await Topaz.instance.insertBloqueoPersona({
+        tipoDocumento: persona.TipoDocumento,
+        nrodocumento: persona.nrodocumento,
+        numsolicitud: persona.numsolicitud,
+        bloqueo: CLIENTE_BLOQUEADO,
+        nivelriesgo: tipoRiesgo,
+        observacion:
+          persona.nrodocumento === datoConsultado
+            ? `Se bloqueó porque tiene riesgo tipo: ${tipoRiesgo}`
+            : `Se bloqueó por contagio del cliento con documento número: ${datoConsultado} y número de solicitud ${numeroSolicitud}`
+      });
+    });
+    //ahora limpiamos la tabla temporal, porque ya la utilizamos
+    await Topaz.instance.deleteTemporalEnvioCorreo({ numsolicitud: numeroSolicitud });
   }
 
   /**
@@ -357,6 +402,7 @@ export interface IMailOptionsContext {
   aplicacion?: string;
   usuario?: string;
   oficina?: string;
+  emailDescription?: IMailDescription[];
 }
 
 export interface ICliente {

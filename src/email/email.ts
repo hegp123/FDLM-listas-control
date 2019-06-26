@@ -9,6 +9,7 @@ const logger = log.logger(__filename);
 import path from "path";
 import { TEMPLATE_NOTIFICACION_CORREO } from "../constants/Constantes";
 import { IMailOptionsContext } from "../business-logic/compliance";
+import { Helpers } from "./helpers";
 
 export default class EMail {
   private static _instance: EMail;
@@ -65,8 +66,8 @@ export default class EMail {
             // debug: true
           };
           logger.error("00000000 PILAS NO OLVIDES QUITAR ESTA LINEA Y BORRAR MI CONTRASEÑA");
-          resolve(emailConfiguracion);
-          // resolve(EMAIL_CONFIG_HECTOR);
+          // resolve(emailConfiguracion);
+          resolve(EMAIL_CONFIG_HECTOR);
         })
         .catch((error: Error) => {
           logger.error(error);
@@ -167,11 +168,13 @@ export default class EMail {
         extname: ".hbs",
         layoutsDir: path.join(__dirname, "templates"),
         defaultLayout: TEMPLATE_NOTIFICACION_CORREO,
-        partialsDir: path.join(__dirname, "templates/partials/")
+        partialsDir: path.join(__dirname, "templates/partials/"),
+        helpers: Helpers
       },
       viewPath: path.join(__dirname, "templates"),
       extName: ".hbs"
     };
+
     this.instance.transporter.use("compile", hbs(options));
     //quitamos el atributo html, y adicionamos template y context.... para que funcione con plantillas
     delete mailOptions.html;

@@ -1,4 +1,4 @@
-import mssql, { RequestError, IResult, ISqlTypeFactory, ISqlType } from "mssql";
+import mssql, { RequestError, IResult, ISqlTypeFactory, ISqlType, Transaction } from "mssql";
 import { DATA_BASE_CONFIG_MOVILIZATE, DATA_BASE_CONFIG_VIGIA, DATA_BASE_CONFIG_TOPAZ } from "../config/config";
 import * as log from "../log/logger";
 const logger = log.logger(__filename);
@@ -186,6 +186,36 @@ export default class MsSqlServer {
     });
   }
 
+  static procesarRiesgo3(dataBase: mssql.ConnectionPool) {
+    return new Promise((resolve, reject) => {
+      const transaction: Transaction = dataBase.transaction();
+      transaction.begin(mssql.ISOLATION_LEVEL.READ_COMMITTED, error => {
+        if (error) {
+          reject({ ok: false, errorMessage: error });
+        }
+
+        let rolledBack = false;
+        transaction.on("rollback", aborted => {
+          // emited with aborted === true
+          rolledBack = true;
+        });
+        let request = transaction.request();
+        request.query("insert into mytable (bitcolumn) values (2)", (error, result) => {
+          if (error) {
+            if (!rolledBack) {
+              transaction.rollback(error => {
+                // ... error checks
+              });
+            }
+          } else {
+            transaction.commit(error => {
+              // ... error checks
+            });
+          }
+        });
+      });
+    });
+  }
   /**
    * Ejecuta un procedimiento al macenado
    * Esto no se ha probado aun, puede terner errores
@@ -225,5 +255,3 @@ export interface ISqlValue {
 
 // documentacion para revisar tranacciones
 // https://www.npmjs.com/package/mssql#cli
-// https://tediousjs.github.io/node-mssql/
-// https://leankit.com/blog/2015/06/painless-sql-server-with-nodejs-and-seriate/
