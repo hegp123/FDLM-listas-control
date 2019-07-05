@@ -1,6 +1,9 @@
 import * as log from "../log/logger";
 import MsSqlServer, { ISqlValue } from "../database/sqlserver";
-import mssql from "mssql";
+import mssql, { Transaction } from "mssql";
+import { IComplianceResponse } from "../services/compliance";
+import Compliance from "./compliance";
+import { CLIENTE_BLOQUEADO } from "../constants/Constantes";
 const logger = log.logger(__filename);
 
 export default class Topaz {
@@ -52,11 +55,11 @@ export default class Topaz {
    * Las necesitamos para mandarlas a bloquear, porque alguien de la misma solicitud está reportado en las listas :(
    * @param numSolicitud
    */
-  getPersonasTemporalesXNumeroSolicitud(numSolicitud: number) {
+  getPersonasTemporalesXNumeroSolicitud(numSolicitud: number, requestTransaction?: mssql.Request) {
     return new Promise<ITemporalEnvioCorreo[]>((resolve, reject) => {
       let query: string = this.queryGetPersonasXNumeroSolicitud.replace("$param1", numSolicitud.toString());
       //   logger.info(query);
-      MsSqlServer.ejecutarQuery(query, MsSqlServer.instance.getDataBaseTopaz())
+      MsSqlServer.ejecutarQuery(query, MsSqlServer.instance.getDataBaseTopaz(), requestTransaction)
         .then((results: ITemporalEnvioCorreo[]) => {
           // logger.debug("resultado => " + results);
           if (results.length === 0) {
@@ -75,21 +78,24 @@ export default class Topaz {
   /**
    * Funcion que inserta en la tabla sl_lista_sarlaft_bloqueo_persona
    */
-  insertBloqueoPersona({
-    tipoDocumento,
-    nrodocumento,
-    numsolicitud,
-    bloqueo,
-    nivelriesgo,
-    observacion
-  }: {
-    tipoDocumento: string;
-    nrodocumento: string;
-    numsolicitud: number;
-    bloqueo: number;
-    nivelriesgo: number;
-    observacion: string;
-  }) {
+  insertBloqueoPersona(
+    {
+      tipoDocumento,
+      nrodocumento,
+      numsolicitud,
+      bloqueo,
+      nivelriesgo,
+      observacion
+    }: {
+      tipoDocumento: string;
+      nrodocumento: string;
+      numsolicitud: number;
+      bloqueo: number;
+      nivelriesgo: number;
+      observacion: string;
+    },
+    requestTransaction?: mssql.Request
+  ) {
     return new Promise((resolve, reject) => {
       let values: ISqlValue[] = [
         { name: "TipoDocumento", type: mssql.VarChar, value: tipoDocumento },
@@ -103,7 +109,7 @@ export default class Topaz {
       let insert = "insert into sl_lista_sarlaft_bloqueo_persona ";
       insert += " (TipoDocumento, nrodocumento, numsolicitud, bloqueo, fecha, nivelriesgo,observacion) ";
       insert += " values (@TipoDocumento, @nrodocumento, @numsolicitud, @bloqueo, @fecha, @nivelriesgo, @observacion)";
-      MsSqlServer.insert(insert, values, MsSqlServer.instance.getDataBaseTopaz())
+      MsSqlServer.insert(insert, values, MsSqlServer.instance.getDataBaseTopaz(), requestTransaction)
         .then(result => {
           resolve(result);
         })
@@ -118,7 +124,10 @@ export default class Topaz {
    * Funcion que inserta en la tabla sl_lista_sarlaft_temporal_envio_correo
    * @param param0
    */
-  insertTemporalEnvioCorreo({ tipoDocumento, nrodocumento, numsolicitud }: { tipoDocumento: string; nrodocumento: string; numsolicitud: number }) {
+  insertTemporalEnvioCorreo(
+    { tipoDocumento, nrodocumento, numsolicitud }: { tipoDocumento: string; nrodocumento: string; numsolicitud: number },
+    requestTransaction?: mssql.Request
+  ) {
     return new Promise((resolve, reject) => {
       let values: ISqlValue[] = [
         { name: "TipoDocumento", type: mssql.VarChar, value: tipoDocumento },
@@ -128,7 +137,7 @@ export default class Topaz {
       let insert = "insert into sl_lista_sarlaft_temporal_envio_correo ";
       insert += " (TipoDocumento, nrodocumento, numsolicitud) ";
       insert += " values (@TipoDocumento, @nrodocumento, @numsolicitud)";
-      MsSqlServer.insert(insert, values, MsSqlServer.instance.getDataBaseTopaz())
+      MsSqlServer.insert(insert, values, MsSqlServer.instance.getDataBaseTopaz(), requestTransaction)
         .then(result => {
           resolve(result);
         })
@@ -143,20 +152,23 @@ export default class Topaz {
    * Funcion que inserta en la tabla sl_lista_sarlaft_detalle
    * @param param0
    */
-  insertDetalle({
-    riesgo,
-    lista,
-    numsolicitud,
-    nrodocumento,
-    descripcion
-  }: {
-    riesgo: string;
-    lista: string;
-    numsolicitud: number;
-    nrodocumento: string;
-    descripcion: string;
-  }) {
-    return new Promise((resolve, reject) => {
+  insertDetalle(
+    {
+      riesgo,
+      lista,
+      numsolicitud,
+      nrodocumento,
+      descripcion
+    }: {
+      riesgo: string;
+      lista: string;
+      numsolicitud: number;
+      nrodocumento: string;
+      descripcion: string;
+    },
+    requestTransaction?: mssql.Request
+  ) {
+    return new Promise(async (resolve, reject) => {
       let values: ISqlValue[] = [
         { name: "riesgo", type: mssql.VarChar, value: riesgo },
         { name: "lista", type: mssql.VarChar, value: lista },
@@ -168,7 +180,7 @@ export default class Topaz {
       let insert = "insert into sl_lista_sarlaft_detalle ";
       insert += " (riesgo, lista, numsolicitud, nrodocumento, fechalog, descripcion) ";
       insert += " values (@riesgo, @lista, @numsolicitud, @nrodocumento, @fechalog, @descripcion)";
-      MsSqlServer.insert(insert, values, MsSqlServer.instance.getDataBaseTopaz())
+      await MsSqlServer.insert(insert, values, MsSqlServer.instance.getDataBaseTopaz(), requestTransaction)
         .then(result => {
           resolve(result);
         })
@@ -184,12 +196,12 @@ export default class Topaz {
    * Se elimina porque ya se utilizo para bloquearlos, entones despues de bloqueados ya no son necesarios, seria basura
    * @param param0
    */
-  deleteTemporalEnvioCorreo({ numsolicitud }: { numsolicitud: number }) {
+  deleteTemporalEnvioCorreo({ numsolicitud }: { numsolicitud: number }, requestTransaction?: mssql.Request) {
     return new Promise((resolve, reject) => {
       let values: ISqlValue[] = [{ name: "numsolicitud", type: mssql.Float, value: numsolicitud }];
       let deleteQuery = "delete from sl_lista_sarlaft_temporal_envio_correo where numsolicitud = @numsolicitud ";
 
-      MsSqlServer.delete(deleteQuery, values, MsSqlServer.instance.getDataBaseTopaz())
+      MsSqlServer.delete(deleteQuery, values, MsSqlServer.instance.getDataBaseTopaz(), requestTransaction)
         .then(result => {
           resolve(result);
         })
@@ -197,6 +209,100 @@ export default class Topaz {
           logger.error(error.message);
           reject(error.message);
         });
+    });
+  }
+
+  procesarRiesgo3(response: IComplianceResponse, listasTipo2: string[], numeroSolicitud: number, tipoRiesgo: number) {
+    return new Promise(async (resolve, reject) => {
+      const transaction: Transaction = await MsSqlServer.instance.getDataBaseTopaz().transaction();
+      transaction.begin(mssql.ISOLATION_LEVEL.READ_COMMITTED, async (error: any) => {
+        if (error) {
+          reject({ ok: false, errorMessage: error });
+        }
+        try {
+          const requestTransaction = transaction.request();
+
+          let listas = response.resultados;
+          let datoConsultado = response.datoConsultado.toString();
+          for (let index = 0; index < listas.length; index++) {
+            let resultado = listas[index];
+            let descripcion: string = resultado.descripcion;
+            let riesgo = Compliance.getTipoRiesgoPorResultado(resultado, listasTipo2);
+            if (descripcion.length > 0) {
+              await this.insertDetalle(
+                {
+                  riesgo: riesgo.toString(),
+                  lista: resultado.lista,
+                  numsolicitud: numeroSolicitud,
+                  nrodocumento: datoConsultado,
+                  descripcion: descripcion.toString()
+                },
+                requestTransaction
+              );
+            }
+          }
+
+          // //consultamos las otras personas que pertenecen a la solicitud, para bloquearlas
+          let personasABloquear: ITemporalEnvioCorreo[] = await this.getPersonasTemporalesXNumeroSolicitud(numeroSolicitud, requestTransaction);
+          // // adicionamos al cliente actualmente consultado y aparece en alguna de las listas con riesgo 3, entonces este man afecta a los demas consultados previamente
+          personasABloquear.push({
+            TipoDocumento: response.tipoDocumento,
+            nrodocumento: datoConsultado,
+            numsolicitud: numeroSolicitud
+          });
+          // //mandand a bloquear al cliente actual y a su combo que haian pasado limpio en las listas
+
+          logger.debug("=========> antes de insertar   T");
+          for (let index = 0; index < personasABloquear.length; index++) {
+            const persona = personasABloquear[index];
+            await this.insertBloqueoPersona(
+              {
+                tipoDocumento: persona.TipoDocumento,
+                nrodocumento: persona.nrodocumento,
+                numsolicitud: persona.numsolicitud,
+                bloqueo: CLIENTE_BLOQUEADO,
+                nivelriesgo: tipoRiesgo,
+                observacion:
+                  persona.nrodocumento === datoConsultado
+                    ? `Se bloqueó porque tiene riesgo tipo: ${tipoRiesgo}`
+                    : `Se bloqueó por contagio del cliento con documento número: ${datoConsultado} y número de solicitud ${numeroSolicitud}`
+              },
+              requestTransaction
+            );
+          }
+          // //ahora limpiamos la tabla temporal, porque ya la utilizamos
+          await this.deleteTemporalEnvioCorreo({ numsolicitud: numeroSolicitud }, requestTransaction);
+
+          logger.debug("=========> VAMOS A HACER COMMIT");
+          transaction.commit(error => {
+            if (error) {
+              logger.error("++++++++++++++++ " + error.message);
+              reject({ ok: false, error: error.message });
+              return;
+            }
+            logger.debug("=========>  COMMIT   ok");
+            resolve({ ok: true });
+          });
+        } catch (err) {
+          logger.debug("=========> antes de  rollback ");
+          logger.error(err);
+          // transaction.rollback(error => {
+          //   logger.debug("=========>  rollback   ok");
+          //   reject({ ok: false });
+          // });
+          transaction.rollback(rollbackError => {
+            if (rollbackError) {
+              logger.error("Error al hacer rollback: " + rollbackError);
+              reject({ ok: false, errorMessage: rollbackError });
+              return;
+            } else {
+              logger.info("rollback: OK");
+              reject(err);
+              return;
+            }
+          });
+        }
+      });
     });
   }
   //

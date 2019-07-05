@@ -56,18 +56,21 @@ export default class EMail {
           const emailConfiguracion = {
             host: results.filter(res => res.idConfiguracion === EMAIL_CONFIG.idParamServerMail)[0].ValorTexto, //this.getValue(results, EMAIL_CONFIG.idParamServerMail),
             port: results.filter(res => res.idConfiguracion === EMAIL_CONFIG.idParamPortMail)[0].ValorTexto, //this.getValue(results, EMAIL_CONFIG.idParamPortMail),
-            auth: {
+            /*
+            Nota: no se requiere autenticacion ya que la autenticacion es anonima, se encuentra configurada en el SMTP
+             auth: {
               user: results.filter(res => res.idConfiguracion === EMAIL_CONFIG.idParamDomainMail)[0].ValorTexto, //this.getValue(results, EMAIL_CONFIG.idParamDomainMail),
-              pass: results.filter(res => res.idConfiguracion === EMAIL_CONFIG.idParamDomainPassword)[0].ValorTexto //this.getValue(results, EMAIL_CONFIG.idParamDomainPassword)
-            },
-            from: results.filter(res => res.idConfiguracion === EMAIL_CONFIG.idParamDomainMail)[0].ValorTexto, //this.getValue(results, EMAIL_CONFIG.idParamDomainMail),
-            sender: results.filter(res => res.idConfiguracion === EMAIL_CONFIG.idParamDomainUser)[0].ValorTexto //this.getValue(results, EMAIL_CONFIG.idParamDomainUser)
-            // logger: true,
-            // debug: true
+              pass: results.filter(res => res.idConfiguracion === EMAIL_CONFIG.idParamDomainPassword)[0].ValorTexto, //this.getValue(results, EMAIL_CONFIG.idParamDomainPassword)
+              domain: 'desarrollo'
+            }, */
+            from: results.filter(res => res.idConfiguracion === EMAIL_CONFIG.idParamDomainMail)[0].ValorTexto, 
+            sender: results.filter(res => res.idConfiguracion === EMAIL_CONFIG.idParamDomainUser)[0].ValorTexto
+             /* logger: true,
+             debug: true */
           };
-          logger.error("00000000 PILAS NO OLVIDES QUITAR ESTA LINEA Y BORRAR MI CONTRASEÑA");
-          // resolve(emailConfiguracion);
-          resolve(EMAIL_CONFIG_HECTOR);
+          //logger.error("00000000 PILAS NO OLVIDES QUITAR ESTA LINEA Y BORRAR MI CONTRASEÑA");
+          resolve(emailConfiguracion);
+          //resolve(EMAIL_CONFIG_HECTOR);
         })
         .catch((error: Error) => {
           logger.error(error);

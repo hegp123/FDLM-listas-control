@@ -1,5 +1,6 @@
 import mssql, { RequestError, IResult, ISqlTypeFactory, ISqlType, Transaction } from "mssql";
 import { DATA_BASE_CONFIG_MOVILIZATE, DATA_BASE_CONFIG_VIGIA, DATA_BASE_CONFIG_TOPAZ } from "../config/config";
+const async = require("async");
 import * as log from "../log/logger";
 const logger = log.logger(__filename);
 
@@ -99,16 +100,16 @@ export default class MsSqlServer {
    * @param insertQuery ejemplo: insert into testtable (somecolumn, somecolumn2) values (@myval, @myval2)
    * @param values este valor es un json de la forma como esta el siguiente ejemplo: [{"name": "myval", "type": "mssql.VarChar", "value": "valor a insertar" }, { "name": "myval2", "type": "mssql.mssql.Int", "value": 12345 } ]
    */
-  static insert(insertQuery: string, values: any[], dataBase: mssql.ConnectionPool) {
-    return this.insertUpdateDelete(insertQuery, values, dataBase);
+  static insert(insertQuery: string, values: any[], dataBase: mssql.ConnectionPool, requestTransaction?: mssql.Request) {
+    return this.insertUpdateDelete(insertQuery, values, dataBase, requestTransaction);
   }
 
-  static update(insertQuery: string, values: any, dataBase: mssql.ConnectionPool) {
-    return this.insertUpdateDelete(insertQuery, values, dataBase);
+  static update(insertQuery: string, values: any, dataBase: mssql.ConnectionPool, requestTransaction?: mssql.Request) {
+    return this.insertUpdateDelete(insertQuery, values, dataBase, requestTransaction);
   }
 
-  static delete(insertQuery: string, values: any, dataBase: mssql.ConnectionPool) {
-    return this.insertUpdateDelete(insertQuery, values, dataBase);
+  static delete(insertQuery: string, values: any, dataBase: mssql.ConnectionPool, requestTransaction?: mssql.Request) {
+    return this.insertUpdateDelete(insertQuery, values, dataBase, requestTransaction);
   }
 
   /**
@@ -116,9 +117,14 @@ export default class MsSqlServer {
    * @param insertQuery ejemplo: insert into testtable (somecolumn, somecolumn2) values (@myval, @myval2)
    * @param values este valor es un json de la forma como esta el siguiente ejemplo: [{"name": "myval", "type": mssql.VarChar, "value": "valor a insertar" }, { "name": "myval2", "type": mssql.Int, "value": 12345 } ]
    */
-  private static insertUpdateDelete(insertQuery: string, values: ISqlValue[], dataBase: mssql.ConnectionPool) {
+  private static insertUpdateDelete(insertQuery: string, values: ISqlValue[], dataBase: mssql.ConnectionPool, requestTransaction?: mssql.Request) {
     return new Promise((resolve, reject) => {
-      let request = dataBase.request();
+      let request: any;
+      if (requestTransaction) {
+        request = requestTransaction;
+      } else {
+        request = dataBase.request();
+      }
 
       // logger.debug(`############## insertQuery: ${insertQuery}`);
       // logger.debug(`############## values: ${JSON.stringify(values)}`);
@@ -127,49 +133,31 @@ export default class MsSqlServer {
         request.input(value.name, value.type, value.value);
       });
 
-      request.query(insertQuery, (error, result) => {
+      request.query(insertQuery, (error: any, result: any) => {
         // esto es lo que trae la variable result:  {"recordsets":[],"output":{},"rowsAffected":[1]}
         if (error) {
           logger.error(JSON.stringify(error));
           reject(error);
+          return;
         }
         resolve({ ok: true, message: "El proceso fué exitoso." });
       });
     });
   }
 
-  private static insertUpdateDeleteWithPreparedStatement(insertQuery: string, values: any) {
-    let ps = new mssql.PreparedStatement(this.instance.poolConnectionMovilizate);
-
-    // values.forEach((name: string, type: ISqlType, value: string) => {
-    //   logger.error(`############## name: ${name},    type:${type},    value:${value} ##############`);
-    //   ps.input(name, type, value);
-    // });
-
-    // ps.input("param", mssql.Int);
-    // ps.prepare("select @param as value", err => {
-    //   // ... error checks
-
-    //   ps.execute({ param: 12345 }, (err, result) => {
-    //     // ... error checks
-
-    //     logger.error(result.recordset[0].value); // return 12345
-    //     logger.error(result.rowsAffected); // Returns number of affected rows in case of INSERT, UPDATE or DELETE statement.
-
-    //     ps.unprepare(err => {
-    //       // ... error checks
-    //     });
-    //   });
-    // });
-  }
-
   /**
    * Este metodo ejecuta un query pasado como parametro
    * @param query
    */
-  static ejecutarQuery(query: string, dataBase: mssql.ConnectionPool): Promise<any> {
+  static ejecutarQuery(query: string, dataBase: mssql.ConnectionPool, requestTransaction?: mssql.Request): Promise<any> {
     return new Promise<any>((resolve, reject) => {
-      dataBase.request().query(query, (err, results) => {
+      let request: any;
+      if (requestTransaction) {
+        request = requestTransaction;
+      } else {
+        request = dataBase.request();
+      }
+      request.query(query, (err: any, results: any) => {
         if (err) {
           logger.error(err);
           reject(err);
@@ -186,71 +174,230 @@ export default class MsSqlServer {
     });
   }
 
-  static procesarRiesgo3(dataBase: mssql.ConnectionPool) {
-    return new Promise((resolve, reject) => {
-      const transaction: Transaction = dataBase.transaction();
-      transaction.begin(mssql.ISOLATION_LEVEL.READ_COMMITTED, error => {
-        if (error) {
-          reject({ ok: false, errorMessage: error });
-        }
-
-        let rolledBack = false;
-        transaction.on("rollback", aborted => {
-          // emited with aborted === true
-          rolledBack = true;
-        });
-        let request = transaction.request();
-        request.query("insert into mytable (bitcolumn) values (2)", (error, result) => {
-          if (error) {
-            if (!rolledBack) {
-              transaction.rollback(error => {
-                // ... error checks
-              });
-            }
-          } else {
-            transaction.commit(error => {
-              // ... error checks
-            });
-          }
-        });
-      });
-    });
-  }
   /**
    * Ejecuta un procedimiento al macenado
    * Esto no se ha probado aun, puede terner errores
    * @param query
    * @param input
    */
-  static ejecutarProcedure(query: string, input: string) {
-    return new Promise((resolve, reject) => {
-      this.instance.poolConnectionMovilizate
-        .request()
-        .input("input_parameter", mssql.Int, input)
-        .output("output_parameter", mssql.VarChar(50))
-        .execute("procedure_name", (err, result) => {
-          if (err) {
-            logger.error(err);
-            reject(err);
-            return;
-          }
+  static ejecutarProcedure(nombreProcedimiento: string, inputs: any[], outputs: any[], dataBase: mssql.ConnectionPool): Promise<any> {
+    return new Promise<any>((resolve, reject) => {
+      let request = dataBase.request();
 
-          if (result === undefined || result.recordset.length === 0) {
-            reject("El registro solicitado no existe.");
-          } else {
-            resolve(result.recordset);
-          }
+      inputs.forEach(input => {
+        request.input(input.name, input.type, input.value);
+      });
+      outputs.forEach(output => {
+        request.output(output.name, output.type);
+      });
 
-          console.dir(result);
-        });
+      request.execute(nombreProcedimiento, (error, result: any) => {
+        // esto es lo que trae la variable result:  {"recordsets":[],"output":{"PAR_ENCONTRO":"S","PAR_TIPO":"D","PAR_LISTAS":"(12)-LISTA FUNCIONARIOS ACTIVOS-Amenaza Alta-RECHAZAR VINCULACIËN"},"rowsAffected":[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],"returnValue":0}
+        if (error) {
+          logger.error(JSON.stringify(error));
+          reject(error);
+          return;
+        }
+        // logger.info("-------->" + JSON.stringify(result.output));
+        resolve(result.output);
+      });
     });
   }
+
+  static async testCaseTransaccion_Commit_OK(dataBase: mssql.ConnectionPool) {
+    return new Promise((resolve, reject) => {
+      const transaction = new mssql.Transaction(dataBase);
+      transaction.begin(mssql.ISOLATION_LEVEL.READ_COMMITTED, async (error: any) => {
+        if (error) {
+          reject({ ok: false, errorMessage: error });
+        }
+        try {
+          const request = new mssql.Request(transaction);
+
+          let values: ISqlValue[] = [
+            { name: "riesgo", type: mssql.VarChar, value: "riesgo" },
+            { name: "lista", type: mssql.VarChar, value: "lista" },
+            { name: "numsolicitud", type: mssql.Float, value: 12345 },
+            { name: "nrodocumento", type: mssql.VarChar, value: "nrodocumento" },
+            { name: "fechalog", type: mssql.DateTime, value: new Date() },
+            { name: "descripcion", type: mssql.NVarChar, value: "descripcion" }
+          ];
+          let insert = "insert into sl_lista_sarlaft_detalle ";
+          insert += " (riesgo, lista, numsolicitud, nrodocumento, fechalog, descripcion) ";
+          insert += " values (@riesgo, @lista, @numsolicitud, @nrodocumento, @fechalog, @descripcion)";
+
+          values.forEach(value => {
+            request.input(value.name, value.type, value.value);
+          });
+
+          const result1 = await request.query(insert);
+          const result2 = await request.query(insert);
+          const result3 = await request.query(insert);
+          const result4 = await request.query(insert);
+          const result5 = await request.query(insert);
+
+          transaction.commit(commitError => {
+            if (commitError) {
+              logger.error("Error al hacer commit: " + commitError);
+              reject({ ok: false, errorMessage: commitError });
+              return;
+            } else {
+              logger.info("commit: OK");
+              resolve("transaccion OK");
+            }
+          });
+        } catch (err) {
+          transaction.rollback(rollbackError => {
+            if (rollbackError) {
+              logger.error("Error al hacer rollback: " + rollbackError);
+              reject({ ok: false, errorMessage: rollbackError });
+              return;
+            } else {
+              logger.info("rollback: OK");
+              reject(err);
+              return;
+            }
+          });
+        }
+      });
+    });
+  }
+
+  static async testCaseTransaccion_Roolback(dataBase: mssql.ConnectionPool) {
+    return new Promise((resolve, reject) => {
+      const transaction = new mssql.Transaction(dataBase);
+      transaction.begin(mssql.ISOLATION_LEVEL.READ_COMMITTED, async (error: any) => {
+        if (error) {
+          reject({ ok: false, errorMessage: error });
+        }
+        try {
+          const request = new mssql.Request(transaction);
+
+          let values: ISqlValue[] = [
+            { name: "riesgo", type: mssql.VarChar, value: "riesgo" },
+            { name: "lista", type: mssql.VarChar, value: "lista" },
+            { name: "numsolicitud", type: mssql.Float, value: 12345 },
+            { name: "nrodocumento", type: mssql.VarChar, value: "nrodocumento" },
+            { name: "fechalog", type: mssql.DateTime, value: new Date() },
+            { name: "descripcion", type: mssql.NVarChar, value: "descripcion" }
+          ];
+          let insert = "insert into sl_lista_sarlaft_detalle ";
+          insert += " (riesgo, lista, numsolicitud, nrodocumento, fechalog, descripcion) ";
+          insert += " values (@riesgo, @lista, @numsolicitud, @nrodocumento, @fechalog, @descripcion)";
+
+          values.forEach(value => {
+            request.input(value.name, value.type, value.value);
+          });
+
+          const result1 = await request.query(insert);
+          const result2 = await request.query(insert);
+          const result3 = await request.query("insert into sl_lista_sarlaft_detalle este insert esta mal, solo para hacer la prueba del roolback");
+          const result4 = await request.query(insert);
+          const result5 = await request.query(insert);
+
+          transaction.commit(commitError => {
+            if (commitError) {
+              logger.error("Error al hacer commit: " + commitError);
+              reject({ ok: false, errorMessage: commitError });
+              return;
+            } else {
+              logger.info("commit: OK");
+              resolve("transaccion OK");
+            }
+          });
+        } catch (err) {
+          transaction.rollback(rollbackError => {
+            if (rollbackError) {
+              logger.error("Error al hacer rollback: " + rollbackError);
+              reject({ ok: false, errorMessage: rollbackError });
+              return;
+            } else {
+              logger.info("rollback: OK");
+              reject(err);
+              return;
+            }
+          });
+        }
+      });
+    });
+  }
+
+  /**
+   * Importante:  NO se debe utilizar for de esta forma: forEach(   ->  sale error
+   * Se debe utilizar el for de esta forma:  for (let index = 0; index < 5; index++)
+   * @param dataBase
+   */
+  static async testCaseTransaccion_Commit_OK_con_FOR(dataBase: mssql.ConnectionPool) {
+    return new Promise((resolve, reject) => {
+      // const transaction = new mssql.Transaction(dataBase);
+      const transaction = dataBase.transaction();
+      transaction.begin(mssql.ISOLATION_LEVEL.READ_COMMITTED, async (error: any) => {
+        if (error) {
+          reject({ ok: false, errorMessage: error });
+        }
+        try {
+          // const request = new mssql.Request(transaction);
+          const request = transaction.request();
+
+          for (let index = 0; index < 5; index++) {
+            let values: ISqlValue[] = [
+              { name: "riesgo", type: mssql.VarChar, value: "riesgo" },
+              { name: "lista", type: mssql.VarChar, value: "lista" },
+              { name: "numsolicitud", type: mssql.Float, value: 12345 },
+              { name: "nrodocumento", type: mssql.VarChar, value: "nrodocumento" },
+              { name: "fechalog", type: mssql.DateTime, value: new Date() },
+              { name: "descripcion", type: mssql.NVarChar, value: "descripcion" }
+            ];
+            let insert = "insert into sl_lista_sarlaft_detalle ";
+            insert += " (riesgo, lista, numsolicitud, nrodocumento, fechalog, descripcion) ";
+            insert += " values (@riesgo, @lista, @numsolicitud, @nrodocumento, @fechalog, @descripcion)";
+
+            values.forEach(value => {
+              request.input(value.name, value.type, value.value);
+            });
+            if (index === 3) {
+              // await request.query("insert into sl_lista_sarlaft_detalle este insert esta mal, solo para hacer la prueba del roolback");
+              await request.query(insert);
+            }
+            await request.query(insert);
+          }
+
+          transaction.commit(commitError => {
+            if (commitError) {
+              logger.error("Error al hacer commit: " + commitError);
+              reject({ ok: false, errorMessage: commitError });
+              return;
+            } else {
+              logger.info("commit: OK");
+              resolve("transaccion OK");
+            }
+          });
+        } catch (err) {
+          transaction.rollback(rollbackError => {
+            if (rollbackError) {
+              logger.error("Error al hacer rollback: " + rollbackError);
+              reject({ ok: false, errorMessage: rollbackError });
+              return;
+            } else {
+              logger.info("rollback: OK");
+              reject(err);
+              return;
+            }
+          });
+        }
+      });
+    });
+  }
+
+  //
+
+  //
 }
 
 export interface ISqlValue {
   name: string;
   type: any;
-  value: string | number | Date;
+  value?: string | number | Date;
 }
 
 // documentacion para revisar tranacciones

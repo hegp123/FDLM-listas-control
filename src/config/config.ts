@@ -4,7 +4,7 @@ export const FORMATO_FECHA = "dddd, D [de] MMMM [del] YYYY";
 export const FUENTE_CONSULTA_COMPLIANCE = "COMPLIANCE";
 export const FUENTE_CONSULTA_VIGIA = "VIGIA";
 export const BODY_PLANTILLA_NOTIFICACION = "email.body";
-export const MAX_TEXTO_PARA_DESCRIPCION_LISTA = 5000;
+export const MAX_TEXTO_PARA_DESCRIPCION_LISTA = 1000;
 
 // CONFIGURACION DE LA CONEXION A LA BASE DE DATOS
 export const DATA_BASE_CONFIG_MOVILIZATE = {
@@ -12,7 +12,7 @@ export const DATA_BASE_CONFIG_MOVILIZATE = {
   port: 1433,
   database: "movilizate",
   user: "Movilizate",
-  password: "SqlXyz12345",
+  password: "XXXXX",
   pool: {
     max: 10,
     min: 0,
@@ -26,13 +26,14 @@ export const DATA_BASE_CONFIG_TOPAZ = {
   port: 1436,
   database: "FDLM",
   user: "topaz",
-  password: "FmmbTop7",
+  password: "XXXXX",
   pool: {
     max: 10,
     min: 0,
     idleTimeoutMillis: 30000
   },
-  connectionTimeout: 30000
+  connectionTimeout: 30000,
+  log: true
 };
 
 export const DATA_BASE_CONFIG_VIGIA = {
@@ -40,7 +41,7 @@ export const DATA_BASE_CONFIG_VIGIA = {
   port: 1433,
   database: "VIGIAV2",
   user: "VIGIAWSDL",
-  password: "VigiAFdlM2014",
+  password: "XXXXX",
   pool: {
     max: 10,
     min: 0,
@@ -66,7 +67,7 @@ export const EMAIL_TEST_CONECTIVIDAD = false;
 export const ID_PARAM_CORREOS_LISTAS_CONTROL_MAIL = "34";
 export const ID_PARAM_ASUNTO_LISTAS_CONTROL_MAIL = "35";
 export const ID_PARAM_RUTA_ESTILOS = "37";
-export const ID_PARAM_CORREO_ADMIN = "nuevo registro, aun no sabemos el id";
+export const ID_PARAM_CORREO_ADMIN = "70";
 export const EMAIL_CONFIG_HECTOR = {
   host: "smtp.gmail.com",
   port: 465, //587
@@ -89,13 +90,13 @@ export const COMPLIANCE_WS_CONFIG = {
   url: "/ConsultaConsolidadaService/consultaConsolidada/soloRiesgo/false",
   auth: {
     username: "desarrollo@fundaciondelamujer.com",
-    password: "Fundacion2019"
+    password: "XXXXX"
   },
-  timeout: 120000,
+  timeout: 30000,
   responseEncoding: "utf8"
 };
 
 //CONFIGURACION DEL LOG
-export const LOG_PATH = "M:/FDLM/Listas de Control/log/";
+export const LOG_PATH = "C:/log/";
 export const LOG_FILE = "listas-control-ws";
 export const SHOW_FULL_FILE_PATH = false;

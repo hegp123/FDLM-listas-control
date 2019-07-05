@@ -69,17 +69,21 @@ export default class ListaControl {
           reject(processListaControl);
         }
       } else {
-        logger.warn("HUBO UN ERROR EN COMPLIANCE, PERO TRANQUILO AHOR VMOS A VIGIA: " + listaControl.errorMessage);
+        logger.warn("HUBO UN ERROR EN COMPLIANCE, PERO TRANQUILO AHORA VAMOS A VIGIA: " + listaControl.errorMessage);
         logger.info("----------> VAMOS A VIGIA A CONTINUAR CON EL PROCESO");
         parametrosPlantilla.fuenteConsulta = FUENTE_CONSULTA_VIGIA;
-        let getListaControlVigia: any = await Vigia.instance.getListaControl(dataToConsult);
+        let getListaControlVigia: any = await Vigia.instance.getListaControl(dataToConsult, {
+          origen: "Movilizate",
+          cadena: "10984642909",
+          indicador: 1,
+          porcentaje: 0
+        });
         resolve(getListaControlVigia);
       }
     });
   }
 
-  private getTo() {
-    return "hectoregarciap@gmail.com";
+  private getTo() {    
     return new Promise<string>((resolve, reject) => {
       Movilizate.instance
         .getConfiguration(ID_PARAM_CORREOS_LISTAS_CONTROL_MAIL)
@@ -117,7 +121,7 @@ export default class ListaControl {
     });
   }
   private getCorreoAdmin() {
-    return "desarrollo@fundaciondelamujer.com";
+    
     return new Promise<string>((resolve, reject) => {
       Movilizate.instance
         .getConfiguration(ID_PARAM_CORREO_ADMIN)
