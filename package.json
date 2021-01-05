@@ -12,7 +12,7 @@
     "author": "Hector Garcia - Mayasoft - FDLM",
     "license": "ISC",
     "dependencies": {
-        "axios": "^0.19.0",
+        "axios": "^0.21.1",
         "body-parse": "^0.1.0",
         "cors": "^2.8.5",
         "express": "^4.17.1",
